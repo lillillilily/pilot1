@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>장면 인식 연구 설문</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400&display=swap');
+
+:root {
+  --bg: #F4F3F0;
+  --surface: #FFFFFF;
+  --surface2: #EEECE8;
+  --border: #D8D4CD;
+  --border-focus: #3D6B5A;
+  --accent: #2A4E3E;
+  --accent2: #3D6B5A;
+  --accent-light: #E8F0EC;
+  --text: #1A1A18;
+  --muted: #706C66;
+  --warn: #B83030;
+  --selected-bg: #E8F0EC;
+  --selected-border: #3D6B5A;
+  --mono: 'IBM Plex Mono', monospace;
+  --sans: 'Pretendard', -apple-system, sans-serif;
+  --radius: 4px;
+  --transition: all .14s ease;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: var(--sans); font-size: 14px; line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+.shell { max-width: 680px; margin: 0 auto; padding: 0 18px 100px; }
+
+/* sticky */
+.sticky {
+  position: sticky; top: 0; z-index: 30;
+  background: var(--bg); padding: 10px 0 8px;
+  border-bottom: 1px solid var(--border); margin-bottom: 36px;
+}
+.sticky-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.sticky-title { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.sticky-pct { font-family: var(--mono); font-size: 10px; color: var(--accent2); }
+.track { height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+.fill { height: 100%; background: var(--accent2); width: 0%; transition: width .4s ease; }
+
+/* pages */
+.page { display: none; }
+.page.active { display: block; }
+
+/* header */
+.hdr { border-top: 2px solid var(--accent); padding-top: 28px; margin-bottom: 28px; }
+.hdr-label { font-family: var(--mono); font-size: 10px; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.hdr h1 { font-size: 19px; font-weight: 600; line-height: 1.45; margin-bottom: 8px; }
+.hdr .meta { font-size: 12px; color: var(--muted); }
+
+/* consent */
+.consent {
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent2); border-radius: var(--radius);
+  padding: 16px 18px; margin-bottom: 22px;
+}
+.consent p { font-size: 12.5px; color: var(--muted); margin-bottom: 9px; }
+.chk { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
+.chk input { width: 15px; height: 15px; margin-top: 2px; accent-color: var(--accent); flex-shrink: 0; }
+.chk span { font-size: 13px; }
+
+/* instr */
+.instr {
+  background: var(--accent-light); border: 1px solid #BAD4C6;
+  border-radius: var(--radius); padding: 14px 18px; margin-bottom: 24px;
+}
+.instr-title { font-size: 12.5px; font-weight: 600; color: var(--accent); margin-bottom: 7px; }
+.instr p { font-size: 13px; line-height: 1.65; }
+.instr p + p { margin-top: 6px; }
+
+/* ref box */
+.ref-box {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 12px 16px; margin-bottom: 24px;
+  display: flex; align-items: center; gap: 14px;
+}
+.ref-box .ref-label { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: .08em; white-space: nowrap; }
+.ref-compass {
+  display: grid; grid-template-columns: repeat(3, 26px); grid-template-rows: repeat(3, 26px);
+  gap: 2px; flex-shrink: 0;
+}
+.ref-compass .rc { width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-size:14px; color:var(--muted); }
+.ref-compass .rc.active { color: var(--accent); }
+.ref-compass .rc.center { font-size: 8px; color: var(--border); }
+.ref-note { font-size: 11.5px; color: var(--muted); line-height: 1.55; }
+
+/* sec title */
+.sec-title {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--border); padding-bottom: 4px; margin: 28px 0 16px;
+}
+
+/* card */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; }
+
+/* trial header */
+.trial-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.trial-num { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: var(--muted); }
+.trial-badge {
+  font-family: var(--mono); font-size: 9px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 2px; padding: 2px 7px; color: var(--muted);
+}
+
+/* img box */
+.img-box {
+  width: 100%; aspect-ratio: 16/9;
+  background: var(--surface2); border: 1px dashed var(--border);
+  border-radius: var(--radius); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  margin-bottom: 22px; overflow: hidden;
+}
+.img-box img { width:100%; height:100%; object-fit:cover; border-radius:var(--radius); display:block; }
+.img-box .ph { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.img-box .fn { font-family: var(--mono); font-size: 9px; color: #B4B0A8; }
+
+/* q-block */
+.q-block { margin-bottom: 20px; }
+.q-block:last-child { margin-bottom: 0; }
+.q-label { font-size:13px; font-weight:600; margin-bottom:3px; display:flex; align-items:center; gap:6px; }
+.q-label .q-tag {
+  font-family:var(--mono); font-size:9px; background:var(--surface2);
+  border:1px solid var(--border); border-radius:2px; padding:1px 5px; color:var(--muted);
+}
+.q-hint { font-size:11.5px; color:var(--muted); margin-bottom:10px; }
+.req { color: var(--warn); margin-left: 2px; }
+
+/* choices */
+.choices { display:flex; flex-direction:column; gap:7px; }
+.choice {
+  display:flex; align-items:center; gap:10px; padding:9px 13px;
+  border:1.5px solid var(--border); border-radius:var(--radius);
+  cursor:pointer; transition:var(--transition); user-select:none;
+}
+.choice:hover { border-color:var(--border-focus); background:var(--accent-light); }
+.choice.selected { border-color:var(--selected-border); background:var(--selected-bg); }
+.choice input[type=radio] { display:none; }
+.choice-mark {
+  width:16px; height:16px; border:1.5px solid var(--border); border-radius:50%;
+  flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:var(--transition);
+}
+.choice.selected .choice-mark { background:var(--accent2); border-color:var(--accent2); }
+.choice.selected .choice-mark::after { content:''; width:6px; height:6px; background:#fff; border-radius:50%; display:block; }
+.choice-text { font-size:13.5px; }
+
+/* axis */
+.axis-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:4px; }
+.axis-btn {
+  padding:11px 10px; border:1.5px solid var(--border); border-radius:var(--radius);
+  display:flex; align-items:center; gap:10px;
+  cursor:pointer; transition:var(--transition); user-select:none;
+}
+.axis-btn:hover { border-color:var(--border-focus); background:var(--accent-light); }
+.axis-btn.selected { border-color:var(--selected-border); background:var(--selected-bg); }
+.axis-btn.full-width { grid-column: 1 / -1; }
+.axis-icon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
+.axis-text { font-size:13px; line-height:1.35; }
+.axis-text .axis-sub { font-size:10.5px; color:var(--muted); font-family:var(--mono); }
+
+/* cue */
+.cue-list { display:flex; flex-direction:column; gap:7px; margin-top:4px; }
+.cue-item {
+  display:flex; align-items:flex-start; gap:9px; padding:9px 12px;
+  border:1.5px solid var(--border); border-radius:var(--radius);
+  cursor:pointer; transition:var(--transition); user-select:none;
+}
+.cue-item:hover { border-color:var(--border-focus); background:var(--accent-light); }
+.cue-item.checked { border-color:var(--selected-border); background:var(--selected-bg); }
+.cue-item input[type=checkbox] { display:none; }
+.cue-mark {
+  width:15px; height:15px; border:1.5px solid var(--border); border-radius:2px;
+  flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; transition:var(--transition);
+}
+.cue-item.checked .cue-mark { background:var(--accent2); border-color:var(--accent2); }
+.cue-item.checked .cue-mark::after { content:'✓'; font-size:10px; color:#fff; line-height:1; }
+.cue-text { font-size:13px; }
+
+/* cond */
+.cond-block { display:none; margin-top:16px; border-left:2px solid var(--border); padding-left:14px; }
+.cond-block.visible { display:block; }
+
+/* likert */
+.likert { margin-top:4px; }
+.likert-poles { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:6px; font-family:var(--mono); }
+.likert-row { display:flex; gap:6px; }
+.l-cell { flex:1; }
+.l-btn {
+  width:100%; aspect-ratio:1; border:1.5px solid var(--border); border-radius:var(--radius);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:12px; font-weight:500; transition:var(--transition); user-select:none;
+}
+.l-btn:hover { border-color:var(--border-focus); background:var(--accent-light); }
+.l-btn.selected { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+/* id */
+.id-row { display:flex; gap:10px; align-items:flex-end; }
+.id-row input { flex:1; }
+.gen-btn {
+  padding:8px 12px; background:var(--surface2); border:1.5px solid var(--border);
+  border-radius:var(--radius); font-family:var(--mono); font-size:11px;
+  cursor:pointer; white-space:nowrap; color:var(--muted); transition:var(--transition);
+}
+.gen-btn:hover { border-color:var(--border-focus); color:var(--accent); }
+
+.status-box { display:none; margin-top:10px; padding:9px 12px; border-radius:var(--radius); font-size:12px; line-height:1.6; border:1px solid var(--border); }
+.status-box.show { display:block; }
+.status-box.ok { background:#EEF7F2; border-color:#BAD4C6; color:var(--accent); }
+.status-box.warn { background:#FFF8EA; border-color:#E8C777; color:#6B5300; }
+
+select, textarea, input[type="text"] {
+  width:100%; padding:8px 10px; border:1.5px solid var(--border); border-radius:var(--radius);
+  background:var(--bg); font-family:var(--sans); font-size:13px; color:var(--text); outline:none; transition:var(--transition);
+}
+select:focus, textarea:focus, input[type="text"]:focus { border-color:var(--border-focus); }
+textarea { min-height:68px; resize:vertical; }
+
+/* nav */
+.nav-row { display:flex; gap:10px; margin-top:36px; }
+.btn-nav {
+  flex:1; padding:12px 16px; border:1.5px solid var(--border); border-radius:var(--radius);
+  background:var(--surface); font-family:var(--sans); font-size:13px; font-weight:500;
+  cursor:pointer; transition:var(--transition);
+}
+.btn-nav:hover:not(:disabled) { border-color:var(--border-focus); background:var(--accent-light); }
+.btn-nav:disabled { opacity:.3; cursor:not-allowed; }
+.btn-nav.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.btn-nav.primary:hover:not(:disabled) { opacity:.85; }
+.nav-hint { font-family:var(--mono); font-size:10px; color:var(--muted); text-align:center; margin-top:10px; min-height:16px; }
+
+/* thankyou */
+#thankyou { display:none; text-align:center; padding:64px 0; }
+#thankyou .check { font-size:40px; margin-bottom:16px; }
+#thankyou h2 { font-size:21px; font-weight:600; margin-bottom:10px; }
+#thankyou p { font-size:13px; color:var(--muted); line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<div class="sticky">
+  <div class="sticky-row">
+    <span class="sticky-title">Scene Perception Study</span>
+    <span class="sticky-pct" id="pct-txt">시작 전</span>
+  </div>
+  <div class="track"><div class="fill" id="pct-fill"></div></div>
+</div>
+
+<!-- ══ PAGE 0: INTRO ══ -->
+<div class="page active" id="page-0">
+  <div class="hdr">
+    <div class="hdr-label">User Study · Image Scene Perception</div>
+    <h1>이미지 속 장면을 보고 느끼는 대로 답해주세요</h1>
+    <div class="meta">예상 소요 시간: 약 10–15분</div>
+  </div>
+
+  <div class="consent">
+    <p>이 연구는 사람들이 이미지 속 움직임을 어떻게 인식하는지 조사하는 지각 실험입니다. 수집된 응답은 연구 목적으로만 사용되며, 모든 데이터는 익명으로 처리됩니다.</p>
+    <p>참여는 자발적이며, 언제든지 중단할 수 있습니다.</p>
+  </div>
+
+  <div class="instr">
+    <div class="instr-title">📋 안내</div>
+    <p>각 이미지에서 <strong>가장 눈에 띄는 주요 대상</strong>을 기준으로 장면 상태를 직관적으로 판단해주세요.</p>
+    <p>이미지 품질보다는 <strong>장면이 어떻게 느껴지는지</strong>에 집중해 응답해주세요. 정답은 없으며, 첫 인상에 따라 응답해주세요.</p>
+    <p style="margin-top:8px;">움직임 방향은 <strong>물체의 기울기와 관계없이 화면(이미지 프레임) 기준</strong>으로 판단해주세요.</p>
+  </div>
+
+  <div class="ref-box">
+    <div class="ref-label">방향 기준</div>
+    <div class="ref-compass">
+      <div class="rc active">↖</div><div class="rc active">↑</div><div class="rc active">↗</div>
+      <div class="rc active">←</div><div class="rc center">●</div><div class="rc active">→</div>
+      <div class="rc active">↙</div><div class="rc active">↓</div><div class="rc active">↘</div>
+    </div>
+    <div class="ref-note">
+      방향은 <strong>화면 기준</strong>입니다.<br>
+      물체가 기울어져 있어도 화면의 위/아래/좌/우를 기준으로 판단해주세요.
+    </div>
+  </div>
+
+  <div class="sec-title">참여자 정보</div>
+
+  <div class="card">
+    <div class="q-label">참여 식별자 <span class="req">*</span></div>
+    <div class="q-hint" style="margin-bottom:12px">
+      MTurk 참여자는 <strong>Worker ID</strong>를 입력해주세요.<br>
+      그 외 경로 참여자는 자동 생성된 번호를 그대로 사용하시면 됩니다.<br>
+      <span style="color:var(--warn);font-size:11.5px;">이 번호를 메모해두시면 나중에 응답을 수정할 수 있습니다.</span>
+    </div>
+    <div class="id-row">
+      <input type="text" id="participant-id" placeholder="참여 식별자" autocomplete="off"
+             oninput="updateNav()" onchange="handleIdChange()">
+      <button class="gen-btn" onclick="generateNewId()">새로 생성</button>
+    </div>
+    <div id="id-status" class="status-box"></div>
+  </div>
+
+  <div class="card">
+    <div class="q-label">이미지 처리 분야 경험 <span class="req">*</span></div>
+    <div class="choices" style="margin-top:8px">
+      <div class="choice" onclick="selectChoice(this,'exp','0')"><input type="radio" name="exp" value="0"><div class="choice-mark"></div><span class="choice-text">전혀 없음 (스마트폰 기본 카메라만 사용)</span></div>
+      <div class="choice" onclick="selectChoice(this,'exp','1')"><input type="radio" name="exp" value="1"><div class="choice-mark"></div><span class="choice-text">취미 수준 (필터, 간단한 편집 앱)</span></div>
+      <div class="choice" onclick="selectChoice(this,'exp','2')"><input type="radio" name="exp" value="2"><div class="choice-mark"></div><span class="choice-text">중급 (DSLR, 영상 편집 소프트웨어 경험)</span></div>
+      <div class="choice" onclick="selectChoice(this,'exp','3')"><input type="radio" name="exp" value="3"><div class="choice-mark"></div><span class="choice-text">전문 수준 (직업·전공 관련)</span></div>
+    </div>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-nav primary" id="btn-start" onclick="goNext()" disabled>시작하기 →</button>
+  </div>
+  <div class="nav-hint" id="hint-0">동의 체크 및 필수 항목을 완료하면 시작할 수 있습니다</div>
+</div>
+
+<!-- ══ TRIAL PAGES (JS로 생성) ══ -->
+<div id="trial-pages-container"></div>
+
+<!-- ══ FINAL PAGE ══ -->
+<div class="page" id="page-final">
+  <div class="hdr">
+    <div class="hdr-label">거의 다 왔어요</div>
+    <h1>마지막으로 전반적인 느낌을 남겨주세요</h1>
+  </div>
+
+  <div class="sec-title">자유 응답 <span style="font-weight:300;font-size:10px;letter-spacing:0">(선택)</span></div>
+
+  <div class="card">
+    <div class="q-label">판단이 어렵거나 혼란스러웠던 이미지가 있었나요?</div>
+    <textarea id="open-feedback-1" placeholder="자유롭게 작성해주세요." style="margin-top:10px"></textarea>
+  </div>
+  <div class="card">
+    <div class="q-label">기타 의견이나 느낀 점</div>
+    <textarea id="open-feedback-2" placeholder="자유롭게 작성해주세요." style="margin-top:10px"></textarea>
+  </div>
+
+  <div class="nav-row">
+    <button class="btn-nav" onclick="goPrev()">← 이전</button>
+    <button class="btn-nav primary" onclick="handleSubmit()">응답 제출하기</button>
+  </div>
+  <div class="nav-hint">자유 응답은 선택 사항입니다</div>
+</div>
+
+<div id="thankyou">
+  <div class="check">✓</div>
+  <h2>참여해주셔서 감사합니다</h2>
+  <p>응답이 정상적으로 저장되었습니다.<br>식별자를 메모해두셨다면 같은 번호로 재접속해 응답을 수정할 수 있습니다.</p>
+</div>
+
+</div><!-- /.shell -->
+<script>
+// ════════════════════════════════
+// CONFIG
+// ════════════════════════════════
+const CONFIG = {
+  studyId: 'exp1_scene_perception',
+  submissionEndpoint: '',        // POST endpoint (옵션)
+  storagePrefix: 'blurgen-humanstudy',
+  numScenes: 16,                 // ← 씬 수 조정하는 곳
+  numBlurLevels: 5,
+  imageBasePath: './images',     // 블러 이미지: ./images/B{level}/scene{n}.png
+  bboxBasePath:  './images/bbox' // bbox 이미지: ./images/bbox/scene{n}.png
+};
+
+const MAIN_IDS = Array.from({ length: CONFIG.numScenes }, (_, i) => `s${i + 1}`);
+
+// 페이지 인덱스: 0=인트로, 1..N=트라이얼, N+1=파이널
+let currentPage = 0;
+const TOTAL_PAGES = 1 + MAIN_IDS.length + 1;
+
+const responses = {};
+MAIN_IDS.forEach(id => { responses[id] = { q1: null, axis: null, cues: [], conf: null }; });
+
+const trialAssignments = {};
+let isHydrating = false;
+
+// ════════════════════════════════
+// PARTICIPANT ID
+// ════════════════════════════════
+function generateRndId() {
+  return `RND-${Math.floor(10000000 + Math.random() * 90000000)}`;
+}
+function generateNewId() {
+  document.getElementById('participant-id').value = generateRndId();
+  handleIdChange();
+}
+function getParticipantId() {
+  return (document.getElementById('participant-id')?.value || '').trim();
+}
+function setIdStatus(msg, tone = 'ok') {
+  const b = document.getElementById('id-status');
+  if (!b) return;
+  b.className = `status-box show ${tone}`;
+  b.textContent = msg;
+}
+function handleIdChange() {
+  const draft = readLocalDraft(getParticipantId());
+  if (draft?.payload) {
+    hydrateFromPayload(draft.payload);
+    setIdStatus(draft.submitted
+      ? '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출하면 업데이트됩니다.'
+      : '임시 저장된 응답을 불러왔습니다.', 'ok');
+  }
+  updateNav();
+}
+
+// ════════════════════════════════
+// LOCAL STORAGE
+// ════════════════════════════════
+function getDraftKey(pid) { return `${CONFIG.storagePrefix}:${CONFIG.studyId}:${pid.toUpperCase()}`; }
+function readLocalDraft(pid) {
+  if (!pid) return null;
+  try { const r = localStorage.getItem(getDraftKey(pid)); return r ? JSON.parse(r) : null; }
+  catch { return null; }
+}
+function persistDraft(markSubmitted = false) {
+  if (isHydrating) return;
+  const pid = getParticipantId();
+  if (!pid) return;
+  try {
+    const prev = readLocalDraft(pid);
+    localStorage.setItem(getDraftKey(pid), JSON.stringify({
+      pid, savedAt: new Date().toISOString(),
+      submitted: markSubmitted || prev?.submitted === true,
+      payload: collectPayload()
+    }));
+  } catch {}
+}
+
+// ════════════════════════════════
+// COUNTERBALANCING
+// ════════════════════════════════
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function resolveGroupId() {
+  const g = new URLSearchParams(window.location.search).get('group');
+  if (g !== null && !isNaN(+g)) return (+g) % CONFIG.numBlurLevels;
+  return Math.floor(Math.random() * CONFIG.numBlurLevels);
+}
+function buildTrialAssignments(groupId) {
+  return shuffleArray(Array.from({ length: CONFIG.numScenes }, (_, i) => {
+    const n = i + 1;
+    const bl = (n + groupId) % CONFIG.numBlurLevels;
+    return { sceneNumber: n, sceneId: `scene${n}`, blurLevel: bl, blurId: `B${bl}`,
+             imagePath: `${CONFIG.imageBasePath}/B${bl}/scene${n}.png`,
+             bboxPath: `${CONFIG.bboxBasePath}/scene${n}.png` };
+  }));
+}
+
+// ════════════════════════════════
+// AXIS SELECTOR
+// ════════════════════════════════
+const AXES = [
+  { val: 'vertical',   icon: '↕', label: '세로축',         sub: '위 ↔ 아래' },
+  { val: 'horizontal', icon: '↔', label: '가로축',         sub: '왼쪽 ↔ 오른쪽' },
+  { val: 'diag_up',   icon: '↗', label: '우상향 대각축',  sub: '↙ ↔ ↗' },
+  { val: 'diag_down', icon: '↖', label: '좌상향 대각축',  sub: '↘ ↔ ↖' },
+  { val: 'unsure',     icon: '?', label: '판단하기 어렵다', sub: '' },
+];
+function buildAxisSelector(id) {
+  const c = document.getElementById(`axis-${id}`);
+  if (!c) return;
+  AXES.forEach(({ val, icon, label, sub }) => {
+    const btn = document.createElement('div');
+    btn.className = 'axis-btn' + (val === 'unsure' ? ' full-width' : '');
+    btn.dataset.val = val;
+    btn.innerHTML = `<span class="axis-icon">${icon}</span>
+      <span class="axis-text">${label}${sub ? `<br><span class="axis-sub">${sub}</span>` : ''}</span>`;
+    btn.onclick = () => selectAxis(id, val);
+    c.appendChild(btn);
+  });
+}
+function selectAxis(id, val) {
+  document.querySelectorAll(`#axis-${id} .axis-btn`).forEach(b => b.classList.remove('selected'));
+  document.querySelector(`#axis-${id} [data-val="${val}"]`)?.classList.add('selected');
+  responses[id].axis = val;
+  updateNav(); persistDraft();
+}
+
+// ════════════════════════════════
+// CUE CHECKBOXES
+// ════════════════════════════════
+const CUES = [
+  { val: 'streak',  label: '번짐이나 흔적의 방향' },
+  { val: 'pose',    label: '물체의 자세나 형태' },
+  { val: 'context', label: '장면 전체의 맥락' },
+  { val: 'prior',   label: '해당 물체에 대한 사전 지식' },
+  { val: 'other',   label: '기타' },
+];
+function buildCueCheckboxes(id) {
+  const c = document.getElementById(`cues-${id}`);
+  if (!c) return;
+  CUES.forEach(({ val, label }) => {
+    const item = document.createElement('label');
+    item.className = 'cue-item';
+    item.innerHTML = `<input type="checkbox" value="${val}"><span class="cue-mark"></span><span class="cue-text">${label}</span>`;
+    const input = item.querySelector('input');
+    input.addEventListener('change', () => {
+      item.classList.toggle('checked', input.checked);
+      responses[id].cues = Array.from(c.querySelectorAll('input:checked')).map(el => el.value);
+      persistDraft();
+    });
+    c.appendChild(item);
+  });
+}
+
+// ════════════════════════════════
+// LIKERT
+// ════════════════════════════════
+function buildLikert(containerId, trialId) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = [1,2,3,4,5].map(n =>
+    `<div class="l-cell"><div class="l-btn" id="l-${containerId}-${n}"
+      onclick="selectLikert('${containerId}','${trialId}',${n})">${n}</div></div>`
+  ).join('');
+}
+function selectLikert(containerId, trialId, val) {
+  for (let i = 1; i <= 5; i++)
+    document.getElementById(`l-${containerId}-${i}`)?.classList.toggle('selected', i === val);
+  responses[trialId].conf = val;
+  updateNav(); persistDraft();
+}
+
+// ════════════════════════════════
+// TRIAL PAGE BUILDER
+// ════════════════════════════════
+function buildTrialPage(slotId, dispIdx, total, assignment) {
+  const page = document.createElement('div');
+  page.className = 'page';
+  page.id = `page-${dispIdx + 1}`;
+  const isLast = dispIdx + 1 === total;
+  page.innerHTML = `
+    <div class="trial-hdr">
+      <span class="trial-num">이미지 ${dispIdx + 1} / ${total}</span>
+      <span class="trial-badge">${assignment.blurId} · scene ${assignment.sceneNumber}</span>
+    </div>
+
+    <div style="margin-bottom:22px">
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">대상 확인</div>
+      <div class="img-box" id="imgbox-bbox-${slotId}" style="margin-bottom:8px">
+        <div class="ph">이미지 로딩 중...</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">판단 이미지</div>
+      <div class="img-box" id="imgbox-${slotId}">
+        <div class="ph">이미지 로딩 중...</div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-tag">Q1</span> 주요 대상의 상태 <span class="req">*</span></div>
+      <div class="q-hint">이 이미지의 주요 대상은 어떤 상태로 보이나요?</div>
+      <div class="choices">
+        <div class="choice" onclick="handleQ1('${slotId}','still')">
+          <input type="radio" name="q1-${slotId}" value="still"><div class="choice-mark"></div><span class="choice-text">정지한 상태</span>
+        </div>
+        <div class="choice" onclick="handleQ1('${slotId}','moving')">
+          <input type="radio" name="q1-${slotId}" value="moving"><div class="choice-mark"></div><span class="choice-text">동작 중인 상태</span>
+        </div>
+        <div class="choice" onclick="handleQ1('${slotId}','unsure')">
+          <input type="radio" name="q1-${slotId}" value="unsure"><div class="choice-mark"></div><span class="choice-text">판단하기 어렵다</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="cond-block" id="cond-${slotId}-axis">
+      <div class="q-block">
+        <div class="q-label"><span class="q-tag">Q2</span> 움직임 방향 <span class="req">*</span></div>
+        <div class="q-hint">주된 움직임에 가장 가까운 <strong>축</strong>을 선택해주세요. 화면 기준입니다.</div>
+        <div class="axis-grid" id="axis-${slotId}"></div>
+      </div>
+    </div>
+
+    <div class="q-block" style="margin-top:20px">
+      <div class="q-label"><span class="q-tag">Q3</span> 판단 근거
+        <span style="font-weight:400;font-size:11px;color:var(--muted)">(복수 선택 가능)</span>
+      </div>
+      <div class="q-hint">이 판단에서 주로 참고한 것은 무엇인가요?</div>
+      <div class="cue-list" id="cues-${slotId}"></div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label"><span class="q-tag">Q4</span> 판단 확신도 <span class="req">*</span></div>
+      <div class="q-hint">방금 판단에 대해 얼마나 확신하나요?</div>
+      <div class="likert">
+        <div class="likert-poles"><span>전혀 확신 없음</span><span>매우 확신함</span></div>
+        <div class="likert-row" id="conf-row-${slotId}"></div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn-nav" onclick="goPrev()">← 이전</button>
+      <button class="btn-nav primary" id="btn-next-${dispIdx + 1}" onclick="goNext()" disabled>
+        ${isLast ? '마지막 단계 →' : '다음 이미지 →'}
+      </button>
+    </div>
+    <div class="nav-hint" id="hint-${dispIdx + 1}">Q1과 Q4는 필수 응답입니다</div>
+  `;
+  return page;
+}
+
+// ════════════════════════════════
+// BRANCHING
+// ════════════════════════════════
+function handleQ1(id, val) {
+  responses[id].q1 = val;
+  document.querySelectorAll(`[name="q1-${id}"]`).forEach(r =>
+    r.closest('.choice')?.classList.toggle('selected', r.value === val)
+  );
+  document.getElementById(`cond-${id}-axis`)?.classList.toggle('visible', val === 'moving');
+  if (val !== 'moving') {
+    responses[id].axis = null;
+    document.querySelectorAll(`#axis-${id} .axis-btn`).forEach(b => b.classList.remove('selected'));
+  }
+  updateNav(); persistDraft();
+}
+function selectChoice(el, group, val) {
+  document.querySelectorAll(`[name="${group}"]`).forEach(r =>
+    r.closest('.choice')?.classList.remove('selected')
+  );
+  el.classList.add('selected');
+  el.querySelector('input').checked = true;
+  updateNav(); persistDraft();
+}
+
+// ════════════════════════════════
+// NAVIGATION & PROGRESS
+// ════════════════════════════════
+function isTrialComplete(id) {
+  const r = responses[id];
+  if (!r.q1 || !r.conf) return false;
+  if (r.q1 === 'moving' && !r.axis) return false;
+  return true;
+}
+function isIntroComplete() {
+  return getParticipantId().length > 0 &&
+         !!document.querySelector('[name="exp"]:checked');
+}
+
+function showPage(idx) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const id = idx === 0 ? 'page-0' : idx === TOTAL_PAGES - 1 ? 'page-final' : `page-${idx}`;
+  document.getElementById(id)?.classList.add('active');
+  currentPage = idx;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  updateProgress();
+  updateNav();
+}
+function goNext() { if (currentPage < TOTAL_PAGES - 1) showPage(currentPage + 1); }
+function goPrev() { if (currentPage > 0) showPage(currentPage - 1); }
+
+function updateNav() {
+  // intro
+  const btnStart = document.getElementById('btn-start');
+  const hint0 = document.getElementById('hint-0');
+  const ok0 = isIntroComplete();
+  if (btnStart) btnStart.disabled = !ok0;
+  if (hint0) hint0.textContent = ok0 ? '' : '식별자와 경험 수준을 입력하면 시작할 수 있습니다';
+
+  // trials
+  MAIN_IDS.forEach((id, i) => {
+    const btn = document.getElementById(`btn-next-${i + 1}`);
+    const hint = document.getElementById(`hint-${i + 1}`);
+    const done = isTrialComplete(id);
+    if (btn) btn.disabled = !done;
+    if (hint) hint.textContent = done ? '' : 'Q1과 Q4(확신도)는 필수 응답입니다';
+  });
+}
+
+function updateProgress() {
+  const done = MAIN_IDS.filter(id => isTrialComplete(id)).length;
+  const total = MAIN_IDS.length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  document.getElementById('pct-fill').style.width = pct + '%';
+
+  const txt =
+    currentPage === 0 ? '시작 전' :
+    currentPage === TOTAL_PAGES - 1 ? `${done} / ${total} 완료` :
+    `${currentPage} / ${total}`;
+  document.getElementById('pct-txt').textContent = txt;
+}
+
+// ════════════════════════════════
+// PAYLOAD
+// ════════════════════════════════
+function collectPayload() {
+  return {
+    study_id: CONFIG.studyId,
+    meta: {
+      timestamp: new Date().toISOString(),
+      participant_id: getParticipantId(),
+      group_id: window._groupId ?? null,
+      experience: document.querySelector('[name="exp"]:checked')?.value || null
+    },
+    trials: MAIN_IDS.map(id => ({
+      trial_slot: id,
+      scene_id: trialAssignments[id]?.sceneId || id,
+      scene_number: trialAssignments[id]?.sceneNumber ?? null,
+      blur_level: trialAssignments[id]?.blurLevel ?? null,
+      blur_id: trialAssignments[id]?.blurId || null,
+      image_path: trialAssignments[id]?.imagePath || null,
+      q1_state: responses[id].q1,
+      q2_axis: responses[id].axis,
+      q3_cues: responses[id].cues,
+      q4_confidence: responses[id].conf
+    })),
+    comments: {
+      difficult_images: document.getElementById('open-feedback-1')?.value || '',
+      other_feedback: document.getElementById('open-feedback-2')?.value || ''
+    }
+  };
+}
+
+// ════════════════════════════════
+// HYDRATION
+// ════════════════════════════════
+function hydrateFromPayload(payload) {
+  if (!payload) return;
+  isHydrating = true;
+  try {
+    const meta = payload.meta || {};
+    if (meta.experience != null && meta.experience !== '') {
+      const el = document.querySelector(`[name="exp"][value="${meta.experience}"]`);
+      if (el) selectChoice(el.closest('.choice'), 'exp', meta.experience);
+    }
+    (payload.trials || []).forEach(trial => {
+      const id = trial.trial_slot;
+      if (!id || !responses[id]) return;
+      if (trial.q1_state) handleQ1(id, trial.q1_state);
+      if (trial.q2_axis) selectAxis(id, trial.q2_axis);
+      if (Array.isArray(trial.q3_cues)) {
+        const c = document.getElementById(`cues-${id}`);
+        trial.q3_cues.forEach(val => {
+          const inp = c?.querySelector(`input[value="${val}"]`);
+          if (inp) { inp.checked = true; inp.closest('.cue-item')?.classList.add('checked'); }
+        });
+        responses[id].cues = trial.q3_cues;
+      }
+      if (trial.q4_confidence) selectLikert(`conf-row-${id}`, id, Number(trial.q4_confidence));
+    });
+    document.getElementById('open-feedback-1').value = payload.comments?.difficult_images || '';
+    document.getElementById('open-feedback-2').value = payload.comments?.other_feedback || '';
+  } finally {
+    isHydrating = false;
+    updateProgress();
+  }
+}
+
+// ════════════════════════════════
+// SUBMIT
+// ════════════════════════════════
+async function handleSubmit() {
+  const payload = collectPayload();
+  console.log('=== PAYLOAD ===', JSON.stringify(payload, null, 2));
+  if (CONFIG.submissionEndpoint) {
+    try {
+      const res = await fetch(CONFIG.submissionEndpoint, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data?.ok === false) throw new Error(data?.error || `HTTP ${res.status}`);
+    } catch (err) { alert(`제출 중 오류: ${err.message}`); return; }
+  }
+  persistDraft(true);
+  document.querySelector('.sticky').style.display = 'none';
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.getElementById('thankyou').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ════════════════════════════════
+// INIT
+// ════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const workerIdFromUrl = urlParams.get('workerId');
+  const initId = workerIdFromUrl || generateRndId();
+  document.getElementById('participant-id').value = initId;
+  if (!workerIdFromUrl)
+    setIdStatus('자동 생성된 식별자입니다. MTurk 참여자는 Worker ID로 교체해주세요.', 'warn');
+
+  const groupId = resolveGroupId();
+  window._groupId = groupId;
+  const trials = buildTrialAssignments(groupId);
+
+  const container = document.getElementById('trial-pages-container');
+  trials.forEach((assignment, i) => {
+    const slotId = MAIN_IDS[i];
+    trialAssignments[slotId] = { ...assignment, trialSlot: slotId };
+
+    const page = buildTrialPage(slotId, i, trials.length, assignment);
+    container.appendChild(page);
+
+    buildAxisSelector(slotId);
+    buildCueCheckboxes(slotId);
+    buildLikert(`conf-row-${slotId}`, slotId);
+
+    const imgBox = document.getElementById(`imgbox-${slotId}`);
+    if (imgBox) imgBox.innerHTML = `
+      <img src="${assignment.imagePath}" alt="판단 이미지 ${i + 1}"
+           onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>이미지를 불러오지 못했습니다</div><div class=\\'fn\\'>${assignment.imagePath}</div>'">
+    `;
+    const bboxBox = document.getElementById(`imgbox-bbox-${slotId}`);
+    if (bboxBox) bboxBox.innerHTML = `
+      <img src="${assignment.bboxPath}" alt="대상 확인 이미지 ${i + 1}"
+           onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>이미지를 불러오지 못했습니다</div><div class=\\'fn\\'>${assignment.bboxPath}</div>'">
+    `;
+  });
+
+  const draft = readLocalDraft(initId);
+  if (draft?.payload) {
+    hydrateFromPayload(draft.payload);
+    setIdStatus(draft.submitted
+      ? '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출할 수 있습니다.'
+      : '임시 저장된 응답을 불러왔습니다.', 'ok');
+  }
+
+  updateProgress();
+  updateNav();
+});
+</script>
+</body>
+</html>
