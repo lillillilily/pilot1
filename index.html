@@ -121,7 +121,7 @@ body {
   align-items: center; justify-content: center; gap: 4px;
   margin-bottom: 22px; overflow: hidden;
 }
-.img-box img { width:100%; height:100%; object-fit:cover; border-radius:var(--radius); display:block; }
+.img-box img { width:100%; height:100%; object-fit:contain; border-radius:var(--radius); display:block; }
 .img-box .ph { font-family: var(--mono); font-size: 11px; color: var(--muted); }
 .img-box .fn { font-family: var(--mono); font-size: 9px; color: #B4B0A8; }
 
@@ -250,8 +250,12 @@ textarea { min-height:68px; resize:vertical; }
 
 <div class="sticky">
   <div class="sticky-row">
-    <span class="sticky-title">Scene Perception Study</span>
+    <span class="sticky-title" id="sticky-title">Scene Perception Study</span>
     <span class="sticky-pct" id="pct-txt">시작 전</span>
+    <select id="lang-select" onchange="setLanguage(this.value)" style="border:1px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:3px;color:var(--muted);">
+      <option value="ko">KO</option>
+      <option value="en">EN</option>
+    </select>
   </div>
   <div class="track"><div class="fill" id="pct-fill"></div></div>
 </div>
@@ -259,41 +263,41 @@ textarea { min-height:68px; resize:vertical; }
 <!-- ══ PAGE 0: INTRO ══ -->
 <div class="page active" id="page-0">
   <div class="hdr">
-    <div class="hdr-label">User Study · Image Scene Perception</div>
-    <h1>이미지 속 장면을 보고 느끼는 대로 답해주세요</h1>
-    <div class="meta">예상 소요 시간: 약 10–15분</div>
+    <div class="hdr-label" id="intro-hdr-label">User Study · Image Scene Perception</div>
+    <h1 id="intro-title">이미지 속 장면을 보고 느끼는 대로 답해주세요</h1>
+    <div class="meta" id="intro-meta">예상 소요 시간: 약 10–15분</div>
   </div>
 
   <div class="consent">
-    <p>이 연구는 사람들이 이미지 속 움직임을 어떻게 인식하는지 조사하는 지각 실험입니다. 수집된 응답은 연구 목적으로만 사용되며, 모든 데이터는 익명으로 처리됩니다.</p>
-    <p>참여는 자발적이며, 언제든지 중단할 수 있습니다.</p>
+    <p id="consent-p1">이 연구는 사람들이 이미지 속 움직임을 어떻게 인식하는지 조사하는 지각 실험입니다. 수집된 응답은 연구 목적으로만 사용되며, 모든 데이터는 익명으로 처리됩니다.</p>
+    <p id="consent-p2">참여는 자발적이며, 언제든지 중단할 수 있습니다.</p>
   </div>
 
   <div class="instr">
-    <div class="instr-title">📋 안내</div>
-    <p>각 이미지에서 <strong>가장 눈에 띄는 주요 대상</strong>을 기준으로 장면 상태를 직관적으로 판단해주세요.</p>
-    <p>이미지 품질보다는 <strong>장면이 어떻게 느껴지는지</strong>에 집중해 응답해주세요. 정답은 없으며, 첫 인상에 따라 응답해주세요.</p>
-    <p style="margin-top:8px;">움직임 방향은 <strong>물체의 기울기와 관계없이 화면(이미지 프레임) 기준</strong>으로 판단해주세요.</p>
+    <div class="instr-title" id="instr-title">📋 안내</div>
+    <p id="instr-p1">각 이미지에서 <strong>가장 눈에 띄는 주요 대상</strong>을 기준으로 장면 상태를 직관적으로 판단해주세요.</p>
+    <p id="instr-p2">이미지 품질보다는 <strong>장면이 어떻게 느껴지는지</strong>에 집중해 응답해주세요. 정답은 없으며, 첫 인상에 따라 응답해주세요.</p>
+    <p id="instr-p3" style="margin-top:8px;">움직임 방향은 <strong>물체의 기울기와 관계없이 화면(이미지 프레임) 기준</strong>으로 판단해주세요.</p>
   </div>
 
   <div class="ref-box">
-    <div class="ref-label">방향 기준</div>
+    <div class="ref-label" id="ref-label">방향 기준</div>
     <div class="ref-compass">
       <div class="rc active">↖</div><div class="rc active">↑</div><div class="rc active">↗</div>
       <div class="rc active">←</div><div class="rc center">●</div><div class="rc active">→</div>
       <div class="rc active">↙</div><div class="rc active">↓</div><div class="rc active">↘</div>
     </div>
-    <div class="ref-note">
+    <div class="ref-note" id="ref-note">
       방향은 <strong>화면 기준</strong>입니다.<br>
       물체가 기울어져 있어도 화면의 위/아래/좌/우를 기준으로 판단해주세요.
     </div>
   </div>
 
-  <div class="sec-title">참여자 정보</div>
+  <div class="sec-title" id="sec-participant">참여자 정보</div>
 
   <div class="card">
-    <div class="q-label">참여 식별자 <span class="req">*</span></div>
-    <div class="q-hint" style="margin-bottom:12px">
+    <div class="q-label" id="id-label">참여 식별자 <span class="req">*</span></div>
+    <div class="q-hint" id="id-hint" style="margin-bottom:12px">
       MTurk 참여자는 <strong>Worker ID</strong>를 입력해주세요.<br>
       그 외 경로 참여자는 자동 생성된 번호를 그대로 사용하시면 됩니다.<br>
       <span style="color:var(--warn);font-size:11.5px;">이 번호를 메모해두시면 나중에 응답을 수정할 수 있습니다.</span>
@@ -301,18 +305,18 @@ textarea { min-height:68px; resize:vertical; }
     <div class="id-row">
       <input type="text" id="participant-id" placeholder="참여 식별자" autocomplete="off"
              oninput="updateNav()" onchange="handleIdChange()">
-      <button class="gen-btn" onclick="generateNewId()">새로 생성</button>
+      <button class="gen-btn" id="btn-generate-id" onclick="generateNewId()">새로 생성</button>
     </div>
     <div id="id-status" class="status-box"></div>
   </div>
 
   <div class="card">
-    <div class="q-label">이미지 처리 분야 경험 <span class="req">*</span></div>
+    <div class="q-label" id="exp-label">이미지 처리 분야 경험 <span class="req">*</span></div>
     <div class="choices" style="margin-top:8px">
-      <div class="choice" onclick="selectChoice(this,'exp','0')"><input type="radio" name="exp" value="0"><div class="choice-mark"></div><span class="choice-text">전혀 없음 (스마트폰 기본 카메라만 사용)</span></div>
-      <div class="choice" onclick="selectChoice(this,'exp','1')"><input type="radio" name="exp" value="1"><div class="choice-mark"></div><span class="choice-text">취미 수준 (필터, 간단한 편집 앱)</span></div>
-      <div class="choice" onclick="selectChoice(this,'exp','2')"><input type="radio" name="exp" value="2"><div class="choice-mark"></div><span class="choice-text">중급 (DSLR, 영상 편집 소프트웨어 경험)</span></div>
-      <div class="choice" onclick="selectChoice(this,'exp','3')"><input type="radio" name="exp" value="3"><div class="choice-mark"></div><span class="choice-text">전문 수준 (직업·전공 관련)</span></div>
+      <div class="choice" onclick="selectChoice(this,'exp','0')"><input type="radio" name="exp" value="0"><div class="choice-mark"></div><span class="choice-text" id="exp-0">전혀 없음 (스마트폰 기본 카메라만 사용)</span></div>
+      <div class="choice" onclick="selectChoice(this,'exp','1')"><input type="radio" name="exp" value="1"><div class="choice-mark"></div><span class="choice-text" id="exp-1">취미 수준 (필터, 간단한 편집 앱)</span></div>
+      <div class="choice" onclick="selectChoice(this,'exp','2')"><input type="radio" name="exp" value="2"><div class="choice-mark"></div><span class="choice-text" id="exp-2">중급 (DSLR, 영상 편집 소프트웨어 경험)</span></div>
+      <div class="choice" onclick="selectChoice(this,'exp','3')"><input type="radio" name="exp" value="3"><div class="choice-mark"></div><span class="choice-text" id="exp-3">전문 수준 (직업·전공 관련)</span></div>
     </div>
   </div>
 
@@ -328,32 +332,32 @@ textarea { min-height:68px; resize:vertical; }
 <!-- ══ FINAL PAGE ══ -->
 <div class="page" id="page-final">
   <div class="hdr">
-    <div class="hdr-label">거의 다 왔어요</div>
-    <h1>마지막으로 전반적인 느낌을 남겨주세요</h1>
+    <div class="hdr-label" id="final-hdr-label">마지막 단계입니다.</div>
+    <h1 id="final-title">진행한 설문에 관해 전반적인 느낌을 남겨주세요</h1>
   </div>
 
-  <div class="sec-title">자유 응답 <span style="font-weight:300;font-size:10px;letter-spacing:0">(선택)</span></div>
+  <div class="sec-title" id="free-title">자유 응답 <span style="font-weight:300;font-size:10px;letter-spacing:0">(선택)</span></div>
 
   <div class="card">
-    <div class="q-label">판단이 어렵거나 혼란스러웠던 이미지가 있었나요?</div>
+    <div class="q-label" id="fb1-label">질문이 모호했거나 이미지가 이해하기 어려운 항목이 있었나요?</div>
     <textarea id="open-feedback-1" placeholder="자유롭게 작성해주세요." style="margin-top:10px"></textarea>
   </div>
   <div class="card">
-    <div class="q-label">기타 의견이나 느낀 점</div>
+    <div class="q-label" id="fb2-label">기타 의견이나 느낀 점</div>
     <textarea id="open-feedback-2" placeholder="자유롭게 작성해주세요." style="margin-top:10px"></textarea>
   </div>
 
   <div class="nav-row">
-    <button class="btn-nav" onclick="goPrev()">← 이전</button>
-    <button class="btn-nav primary" onclick="handleSubmit()">응답 제출하기</button>
+    <button class="btn-nav" id="btn-prev-final" onclick="goPrev()">← 이전</button>
+    <button class="btn-nav primary" id="btn-submit-final" onclick="handleSubmit()">응답 제출하기</button>
   </div>
-  <div class="nav-hint">자유 응답은 선택 사항입니다</div>
+  <div class="nav-hint" id="final-hint">자유 응답은 선택 사항입니다</div>
 </div>
 
 <div id="thankyou">
   <div class="check">✓</div>
-  <h2>참여해주셔서 감사합니다</h2>
-  <p>응답이 정상적으로 저장되었습니다.<br>식별자를 메모해두셨다면 같은 번호로 재접속해 응답을 수정할 수 있습니다.</p>
+  <h2 id="thankyou-title">참여해주셔서 감사합니다</h2>
+  <p id="thankyou-msg">응답이 정상적으로 저장되었습니다.<br>식별자를 메모해두셨다면 같은 번호로 재접속해 응답을 수정할 수 있습니다.</p>
 </div>
 
 </div><!-- /.shell -->
@@ -374,6 +378,208 @@ const CONFIG = {
 };
 
 const MAIN_IDS = Array.from({ length: CONFIG.numScenes }, (_, i) => `s${i + 1}`);
+let currentLang = 'en';
+
+const I18N = {
+  en: {
+    stickyTitle: 'Scene Perception Study',
+    introHdrLabel: 'User Study · Image Scene Perception',
+    introTitle: 'Please answer based on your immediate perception of each image',
+    introMeta: 'Estimated time: about 10-15 minutes',
+    consentP1: 'This study investigates how people perceive motion in images. Responses are used only for research purposes and all data is handled anonymously.',
+    consentP2: 'Participation is voluntary, and you may stop at any time.',
+    instrTitle: '📋 Instructions',
+    instrP1: 'For each image, judge scene status intuitively based on the most visually salient main object.',
+    instrP2: 'Please focus on how the scene feels rather than image quality. There are no right answers, so respond based on your first impression.',
+    instrP3: 'Please judge movement direction relative to the screen (image frame), regardless of object tilt.',
+    refLabel: 'Direction Reference',
+    refNote: 'Direction is based on the screen frame.<br>Please use up/down/left/right of the screen even if the object itself is tilted.',
+    secParticipant: 'Participant Information',
+    idLabel: 'Participant Identifier <span class="req">*</span>',
+    idHint: 'If you are an MTurk participant, enter your <strong>Worker ID</strong>.<br>Otherwise, you may use the auto-generated identifier below.<br><span style="color:var(--warn);font-size:11.5px;">Keep this ID to revisit and update your responses later.</span>',
+    idPlaceholder: 'Participant identifier',
+    btnGenerateId: 'Generate New',
+    expLabel: 'Experience in Image Processing <span class="req">*</span>',
+    exp0: 'None (only basic smartphone camera use)',
+    exp1: 'Hobby level (filters, simple editing apps)',
+    exp2: 'Intermediate (DSLR, video editing software)',
+    exp3: 'Professional (job/major related)',
+    btnStart: 'Start →',
+    hintIntro: 'You can start after entering required items (identifier and experience).',
+    finalHdrLabel: 'Final Step',
+    finalTitle: 'Please share your overall impressions',
+    freeTitle: 'Open Feedback <span style="font-weight:300;font-size:10px;letter-spacing:0">(Optional)</span>',
+    fb1Label: 'Were any questions or images ambiguous or difficult to interpret?',
+    fb2Label: 'Any other comments or thoughts',
+    btnPrevFinal: '← Previous',
+    btnSubmitFinal: 'Submit Responses',
+    finalHint: 'Open feedback is optional',
+    thankyouTitle: 'Thank you for your participation',
+    thankyouMsg: 'Your responses were saved successfully.<br>You can revisit with the same identifier to update responses.',
+    progressBefore: 'Before start',
+    progressDone: '{done} / {total} complete',
+    trialCounter: 'Image {idx} / {total}',
+    trialBadge: '{blurId} · scene {sceneNumber}',
+    targetCheck: 'Target Check',
+    judgmentImage: 'Judgment Image',
+    loadingImage: 'Loading image...',
+    loadFail: 'Failed to load image',
+    q1Label: '<span class="q-tag">Q1</span> State of the main target <span class="req">*</span>',
+    q1Hint: 'How does the main target in this image appear?',
+    q1Still: 'Stationary',
+    q1Moving: 'In motion',
+    q1Unsure: 'Hard to tell',
+    q2Label: '<span class="q-tag">Q2</span> Motion direction <span class="req">*</span>',
+    q2Hint: 'Select the axis closest to the main motion. Use the screen frame as reference.',
+    q3Label: '<span class="q-tag">Q3</span> Basis for judgment',
+    q3Multi: '(Multiple selection allowed)',
+    q3Hint: 'What did you mainly rely on for this judgment?',
+    q4Label: '<span class="q-tag">Q4</span> Confidence <span class="req">*</span>',
+    q4Hint: 'How confident are you in your judgment?',
+    q4Low: 'Not confident at all',
+    q4High: 'Very confident',
+    btnNext: 'Next Image →',
+    btnLast: 'Final Step →',
+    hintTrialRequired: 'Q1 and Q4 are required.',
+    statusLoadedSubmitted: 'Loaded previously submitted responses for this identifier. Re-submit to update.',
+    statusLoadedDraft: 'Loaded saved draft responses.',
+    statusFreshStart: 'No saved responses for this identifier. Starting fresh.',
+    statusAutoId: 'This is an auto-generated identifier. MTurk participants should replace it with Worker ID.',
+    statusAssignFail: 'Server group assignment failed: {msg}. Continuing with local assignment.',
+    statusLoadedServer: 'Loaded previously saved server responses. Re-submit to update.'
+  },
+  ko: {
+    stickyTitle: 'Scene Perception Study',
+    introHdrLabel: 'User Study · Image Scene Perception',
+    introTitle: '이미지 속 장면을 보고 느끼는 대로 답해주세요',
+    introMeta: '예상 소요 시간: 약 10–15분',
+    consentP1: '이 연구는 사람들이 이미지 속 움직임을 어떻게 인식하는지 조사하는 지각 실험입니다. 수집된 응답은 연구 목적으로만 사용되며, 모든 데이터는 익명으로 처리됩니다.',
+    consentP2: '참여는 자발적이며, 언제든지 중단할 수 있습니다.',
+    instrTitle: '📋 안내',
+    instrP1: '각 이미지에서 <strong>가장 눈에 띄는 주요 대상</strong>을 기준으로 장면 상태를 직관적으로 판단해주세요.',
+    instrP2: '이미지 품질보다는 <strong>장면이 어떻게 느껴지는지</strong>에 집중해 응답해주세요. 정답은 없으며, 첫 인상에 따라 응답해주세요.',
+    instrP3: '움직임 방향은 <strong>물체의 기울기와 관계없이 화면(이미지 프레임) 기준</strong>으로 판단해주세요.',
+    refLabel: '방향 기준',
+    refNote: '방향은 <strong>화면 기준</strong>입니다.<br>물체가 기울어져 있어도 화면의 위/아래/좌/우를 기준으로 판단해주세요.',
+    secParticipant: '참여자 정보',
+    idLabel: '참여 식별자 <span class="req">*</span>',
+    idHint: 'MTurk 참여자는 <strong>Worker ID</strong>를 입력해주세요.<br>그 외 경로 참여자는 자동 생성된 번호를 그대로 사용하시면 됩니다.<br><span style="color:var(--warn);font-size:11.5px;">이 번호를 메모해두시면 나중에 응답을 수정할 수 있습니다.</span>',
+    idPlaceholder: '참여 식별자',
+    btnGenerateId: '새로 생성',
+    expLabel: '이미지 처리 분야 경험 <span class="req">*</span>',
+    exp0: '전혀 없음 (스마트폰 기본 카메라만 사용)',
+    exp1: '취미 수준 (필터, 간단한 편집 앱)',
+    exp2: '중급 (DSLR, 영상 편집 소프트웨어 경험)',
+    exp3: '전문 수준 (직업·전공 관련)',
+    btnStart: '시작하기 →',
+    hintIntro: '필수 항목(식별자, 경험 수준)을 입력하면 시작할 수 있습니다',
+    finalHdrLabel: '마지막 단계입니다.',
+    finalTitle: '진행한 설문에 관해 전반적인 느낌을 남겨주세요',
+    freeTitle: '자유 응답 <span style="font-weight:300;font-size:10px;letter-spacing:0">(선택)</span>',
+    fb1Label: '질문이 모호했거나 이미지가 이해하기 어려운 항목이 있었나요?',
+    fb2Label: '기타 의견이나 느낀 점',
+    btnPrevFinal: '← 이전',
+    btnSubmitFinal: '응답 제출하기',
+    finalHint: '자유 응답은 선택 사항입니다',
+    thankyouTitle: '참여해주셔서 감사합니다',
+    thankyouMsg: '응답이 정상적으로 저장되었습니다.<br>식별자를 메모해두셨다면 같은 번호로 재접속해 응답을 수정할 수 있습니다.',
+    progressBefore: '시작 전',
+    progressDone: '{done} / {total} 완료',
+    trialCounter: '이미지 {idx} / {total}',
+    trialBadge: '{blurId} · scene {sceneNumber}',
+    targetCheck: '대상 확인',
+    judgmentImage: '판단 이미지',
+    loadingImage: '이미지 로딩 중...',
+    loadFail: '이미지를 불러오지 못했습니다',
+    q1Label: '<span class="q-tag">Q1</span> 주요 대상의 상태 <span class="req">*</span>',
+    q1Hint: '이 이미지의 주요 대상은 어떤 상태로 보이나요?',
+    q1Still: '정지한 상태',
+    q1Moving: '동작 중인 상태',
+    q1Unsure: '판단하기 어렵다',
+    q2Label: '<span class="q-tag">Q2</span> 움직임 방향 <span class="req">*</span>',
+    q2Hint: '주된 움직임에 가장 가까운 <strong>축</strong>을 선택해주세요. 화면 기준입니다.',
+    q3Label: '<span class="q-tag">Q3</span> 판단 근거',
+    q3Multi: '(복수 선택 가능)',
+    q3Hint: '이 판단에서 주로 참고한 것은 무엇인가요?',
+    q4Label: '<span class="q-tag">Q4</span> 판단 확신도 <span class="req">*</span>',
+    q4Hint: '방금 판단에 대해 얼마나 확신하나요?',
+    q4Low: '전혀 확신 없음',
+    q4High: '매우 확신함',
+    btnNext: '다음 이미지 →',
+    btnLast: '마지막 단계 →',
+    hintTrialRequired: 'Q1과 Q4(확신도)는 필수 응답입니다',
+    statusLoadedSubmitted: '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출하면 업데이트됩니다.',
+    statusLoadedDraft: '임시 저장된 응답을 불러왔습니다.',
+    statusFreshStart: '해당 식별자의 저장된 응답이 없어 새로 시작합니다.',
+    statusAutoId: '자동 생성된 식별자입니다. MTurk 참여자는 Worker ID로 교체해주세요.',
+    statusAssignFail: '서버 그룹 배정 실패: {msg}. 로컬 기준으로 진행합니다.',
+    statusLoadedServer: '서버에 저장된 기존 응답을 불러왔습니다. 수정 후 다시 제출하면 업데이트됩니다.'
+  }
+};
+
+function t(key, vars = {}) {
+  const dict = I18N[currentLang] || I18N.en;
+  let txt = dict[key] ?? I18N.en[key] ?? key;
+  Object.keys(vars).forEach(k => {
+    txt = txt.replaceAll(`{${k}}`, String(vars[k]));
+  });
+  return txt;
+}
+
+function setById(id, key, asHtml = false, vars = {}) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const txt = t(key, vars);
+  if (asHtml) el.innerHTML = txt;
+  else el.textContent = txt;
+}
+
+function setLanguage(lang) {
+  currentLang = lang === 'ko' ? 'ko' : 'en';
+  document.getElementById('lang-select').value = currentLang;
+  applyStaticI18n();
+  refreshDynamicI18n();
+  updateProgress();
+  updateNav();
+}
+
+function applyStaticI18n() {
+  setById('sticky-title', 'stickyTitle');
+  setById('intro-hdr-label', 'introHdrLabel');
+  setById('intro-title', 'introTitle');
+  setById('intro-meta', 'introMeta');
+  setById('consent-p1', 'consentP1');
+  setById('consent-p2', 'consentP2');
+  setById('instr-title', 'instrTitle');
+  setById('instr-p1', 'instrP1', true);
+  setById('instr-p2', 'instrP2', true);
+  setById('instr-p3', 'instrP3', true);
+  setById('ref-label', 'refLabel');
+  setById('ref-note', 'refNote', true);
+  setById('sec-participant', 'secParticipant');
+  setById('id-label', 'idLabel', true);
+  setById('id-hint', 'idHint', true);
+  setById('btn-generate-id', 'btnGenerateId');
+  setById('exp-label', 'expLabel', true);
+  setById('exp-0', 'exp0');
+  setById('exp-1', 'exp1');
+  setById('exp-2', 'exp2');
+  setById('exp-3', 'exp3');
+  setById('btn-start', 'btnStart');
+  setById('final-hdr-label', 'finalHdrLabel');
+  setById('final-title', 'finalTitle');
+  setById('free-title', 'freeTitle', true);
+  setById('fb1-label', 'fb1Label');
+  setById('fb2-label', 'fb2Label');
+  setById('btn-prev-final', 'btnPrevFinal');
+  setById('btn-submit-final', 'btnSubmitFinal');
+  setById('final-hint', 'finalHint');
+  setById('thankyou-title', 'thankyouTitle');
+  setById('thankyou-msg', 'thankyouMsg', true);
+
+  const idInput = document.getElementById('participant-id');
+  if (idInput) idInput.placeholder = t('idPlaceholder');
+}
 
 // 페이지 인덱스: 0=인트로, 1..N=트라이얼, N+1=파이널
 let currentPage = 0;
@@ -381,6 +587,11 @@ const TOTAL_PAGES = 1 + MAIN_IDS.length + 1;
 
 const responses = {};
 MAIN_IDS.forEach(id => { responses[id] = { q1: null, axis: null, cues: [], conf: null }; });
+
+const timings = {};
+MAIN_IDS.forEach(id => {
+  timings[id] = { trialStart: null, firstResponse: null, lastResponse: null, questionTimes: {} };
+});
 
 const trialAssignments = {};
 let isHydrating = false;
@@ -410,11 +621,11 @@ function handleIdChange() {
   if (draft?.payload) {
     hydrateFromPayload(draft.payload);
     setIdStatus(draft.submitted
-      ? '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출하면 업데이트됩니다.'
-      : '임시 저장된 응답을 불러왔습니다.', 'ok');
+      ? t('statusLoadedSubmitted')
+      : t('statusLoadedDraft'), 'ok');
   } else if (pid) {
     clearAllResponses();
-    setIdStatus('해당 식별자의 저장된 응답이 없어 새로 시작합니다.', 'warn');
+    setIdStatus(t('statusFreshStart'), 'warn');
   }
   updateNav();
 }
@@ -422,6 +633,7 @@ function handleIdChange() {
 function clearAllResponses() {
   MAIN_IDS.forEach(id => {
     responses[id] = { q1: null, axis: null, cues: [], conf: null };
+    timings[id] = { trialStart: null, firstResponse: null, lastResponse: null, questionTimes: {} };
 
     document.querySelectorAll(`[name="q1-${id}"]`).forEach(r => {
       r.checked = false;
@@ -445,6 +657,20 @@ function clearAllResponses() {
   document.getElementById('open-feedback-1').value = '';
   document.getElementById('open-feedback-2').value = '';
   updateProgress();
+}
+
+function ensureTrialTimerStarted(id) {
+  if (isHydrating || !timings[id]) return;
+  if (!timings[id].trialStart) timings[id].trialStart = Date.now();
+}
+
+function markResponseTime(id, questionKey) {
+  if (isHydrating || !timings[id]) return;
+  ensureTrialTimerStarted(id);
+  const now = Date.now();
+  if (!timings[id].firstResponse) timings[id].firstResponse = now;
+  timings[id].lastResponse = now;
+  timings[id].questionTimes[questionKey] = now;
 }
 
 // ════════════════════════════════
@@ -519,11 +745,11 @@ async function assignGroupFromBackend(participantId) {
 // AXIS SELECTOR
 // ════════════════════════════════
 const AXES = [
-  { val: 'vertical',   icon: '↕', label: '세로축',         sub: '위 ↔ 아래' },
-  { val: 'horizontal', icon: '↔', label: '가로축',         sub: '왼쪽 ↔ 오른쪽' },
-  { val: 'diag_up',   icon: '↗', label: '우상향 대각축',  sub: '↙ ↔ ↗' },
-  { val: 'diag_down', icon: '↖', label: '좌상향 대각축',  sub: '↘ ↔ ↖' },
-  { val: 'unsure',     icon: '?', label: '판단하기 어렵다', sub: '' },
+  { val: 'vertical',   icon: '↕', label: { ko: '세로축', en: 'Vertical Axis' }, sub: { ko: '위 ↔ 아래', en: 'Up ↔ Down' } },
+  { val: 'horizontal', icon: '↔', label: { ko: '가로축', en: 'Horizontal Axis' }, sub: { ko: '왼쪽 ↔ 오른쪽', en: 'Left ↔ Right' } },
+  { val: 'diag_up',    icon: '↗', label: { ko: '우상향 대각축', en: 'Up-right Diagonal' }, sub: { ko: '↙ ↔ ↗', en: '↙ ↔ ↗' } },
+  { val: 'diag_down',  icon: '↖', label: { ko: '좌상향 대각축', en: 'Up-left Diagonal' }, sub: { ko: '↘ ↔ ↖', en: '↘ ↔ ↖' } },
+  { val: 'unsure',     icon: '?', label: { ko: '판단하기 어렵다', en: 'Hard to tell' }, sub: { ko: '', en: '' } }
 ];
 function buildAxisSelector(id) {
   const c = document.getElementById(`axis-${id}`);
@@ -532,8 +758,10 @@ function buildAxisSelector(id) {
     const btn = document.createElement('div');
     btn.className = 'axis-btn' + (val === 'unsure' ? ' full-width' : '');
     btn.dataset.val = val;
+    const lbl = label[currentLang] || label.en;
+    const sb = sub[currentLang] || sub.en;
     btn.innerHTML = `<span class="axis-icon">${icon}</span>
-      <span class="axis-text">${label}${sub ? `<br><span class="axis-sub">${sub}</span>` : ''}</span>`;
+      <span class="axis-text">${lbl}${sb ? `<br><span class="axis-sub">${sb}</span>` : ''}</span>`;
     btn.onclick = () => selectAxis(id, val);
     c.appendChild(btn);
   });
@@ -542,6 +770,7 @@ function selectAxis(id, val) {
   document.querySelectorAll(`#axis-${id} .axis-btn`).forEach(b => b.classList.remove('selected'));
   document.querySelector(`#axis-${id} [data-val="${val}"]`)?.classList.add('selected');
   responses[id].axis = val;
+  markResponseTime(id, 'q2_axis');
   updateNav(); persistDraft();
 }
 
@@ -549,11 +778,11 @@ function selectAxis(id, val) {
 // CUE CHECKBOXES
 // ════════════════════════════════
 const CUES = [
-  { val: 'streak',  label: '번짐이나 흔적의 방향' },
-  { val: 'pose',    label: '물체의 자세나 형태' },
-  { val: 'context', label: '장면 전체의 맥락' },
-  { val: 'prior',   label: '해당 물체에 대한 사전 지식' },
-  { val: 'other',   label: '기타' },
+  { val: 'streak',  label: { ko: '번짐이나 흔적의 방향', en: 'Direction of blur/trail' } },
+  { val: 'pose',    label: { ko: '물체의 자세나 형태', en: 'Object pose or shape' } },
+  { val: 'context', label: { ko: '장면 전체의 맥락', en: 'Overall scene context' } },
+  { val: 'prior',   label: { ko: '해당 물체에 대한 사전 지식', en: 'Prior knowledge about the object' } },
+  { val: 'other',   label: { ko: '기타', en: 'Other' } }
 ];
 function buildCueCheckboxes(id) {
   const c = document.getElementById(`cues-${id}`);
@@ -561,11 +790,13 @@ function buildCueCheckboxes(id) {
   CUES.forEach(({ val, label }) => {
     const item = document.createElement('label');
     item.className = 'cue-item';
-    item.innerHTML = `<input type="checkbox" value="${val}"><span class="cue-mark"></span><span class="cue-text">${label}</span>`;
+    const lbl = label[currentLang] || label.en;
+    item.innerHTML = `<input type="checkbox" value="${val}"><span class="cue-mark"></span><span class="cue-text">${lbl}</span>`;
     const input = item.querySelector('input');
     input.addEventListener('change', () => {
       item.classList.toggle('checked', input.checked);
       responses[id].cues = Array.from(c.querySelectorAll('input:checked')).map(el => el.value);
+      markResponseTime(id, 'q3_cues');
       persistDraft();
     });
     c.appendChild(item);
@@ -587,6 +818,7 @@ function selectLikert(containerId, trialId, val) {
   for (let i = 1; i <= 5; i++)
     document.getElementById(`l-${containerId}-${i}`)?.classList.toggle('selected', i === val);
   responses[trialId].conf = val;
+  markResponseTime(trialId, 'q4_confidence');
   updateNav(); persistDraft();
 }
 
@@ -600,71 +832,134 @@ function buildTrialPage(slotId, dispIdx, total, assignment) {
   const isLast = dispIdx + 1 === total;
   page.innerHTML = `
     <div class="trial-hdr">
-      <span class="trial-num">이미지 ${dispIdx + 1} / ${total}</span>
-      <span class="trial-badge">${assignment.blurId} · scene ${assignment.sceneNumber}</span>
+      <span class="trial-num" data-role="trial-num">${t('trialCounter', { idx: dispIdx + 1, total })}</span>
+      <span class="trial-badge" data-role="trial-badge">${t('trialBadge', { blurId: assignment.blurId, sceneNumber: assignment.sceneNumber })}</span>
     </div>
 
     <div style="margin-bottom:22px">
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">대상 확인</div>
+      <div data-role="target-check" style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">${t('targetCheck')}</div>
       <div class="img-box" id="imgbox-bbox-${slotId}" style="margin-bottom:8px">
-        <div class="ph">이미지 로딩 중...</div>
+        <div class="ph">${t('loadingImage')}</div>
       </div>
-      <div style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">판단 이미지</div>
+      <div data-role="judgment-image" style="font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">${t('judgmentImage')}</div>
       <div class="img-box" id="imgbox-${slotId}">
-        <div class="ph">이미지 로딩 중...</div>
+        <div class="ph">${t('loadingImage')}</div>
       </div>
     </div>
 
     <div class="q-block">
-      <div class="q-label"><span class="q-tag">Q1</span> 주요 대상의 상태 <span class="req">*</span></div>
-      <div class="q-hint">이 이미지의 주요 대상은 어떤 상태로 보이나요?</div>
+      <div class="q-label" data-role="q1-label">${t('q1Label')}</div>
+      <div class="q-hint" data-role="q1-hint">${t('q1Hint')}</div>
       <div class="choices">
         <div class="choice" onclick="handleQ1('${slotId}','still')">
-          <input type="radio" name="q1-${slotId}" value="still"><div class="choice-mark"></div><span class="choice-text">정지한 상태</span>
+          <input type="radio" name="q1-${slotId}" value="still"><div class="choice-mark"></div><span class="choice-text" data-role="q1-still">${t('q1Still')}</span>
         </div>
         <div class="choice" onclick="handleQ1('${slotId}','moving')">
-          <input type="radio" name="q1-${slotId}" value="moving"><div class="choice-mark"></div><span class="choice-text">동작 중인 상태</span>
+          <input type="radio" name="q1-${slotId}" value="moving"><div class="choice-mark"></div><span class="choice-text" data-role="q1-moving">${t('q1Moving')}</span>
         </div>
         <div class="choice" onclick="handleQ1('${slotId}','unsure')">
-          <input type="radio" name="q1-${slotId}" value="unsure"><div class="choice-mark"></div><span class="choice-text">판단하기 어렵다</span>
+          <input type="radio" name="q1-${slotId}" value="unsure"><div class="choice-mark"></div><span class="choice-text" data-role="q1-unsure">${t('q1Unsure')}</span>
         </div>
       </div>
     </div>
 
     <div class="cond-block" id="cond-${slotId}-axis">
       <div class="q-block">
-        <div class="q-label"><span class="q-tag">Q2</span> 움직임 방향 <span class="req">*</span></div>
-        <div class="q-hint">주된 움직임에 가장 가까운 <strong>축</strong>을 선택해주세요. 화면 기준입니다.</div>
+        <div class="q-label" data-role="q2-label">${t('q2Label')}</div>
+        <div class="q-hint" data-role="q2-hint">${t('q2Hint')}</div>
         <div class="axis-grid" id="axis-${slotId}"></div>
       </div>
     </div>
 
     <div class="q-block" style="margin-top:20px">
-      <div class="q-label"><span class="q-tag">Q3</span> 판단 근거
-        <span style="font-weight:400;font-size:11px;color:var(--muted)">(복수 선택 가능)</span>
+      <div class="q-label" data-role="q3-label">${t('q3Label')}
+        <span data-role="q3-multi" style="font-weight:400;font-size:11px;color:var(--muted)">${t('q3Multi')}</span>
       </div>
-      <div class="q-hint">이 판단에서 주로 참고한 것은 무엇인가요?</div>
+      <div class="q-hint" data-role="q3-hint">${t('q3Hint')}</div>
       <div class="cue-list" id="cues-${slotId}"></div>
     </div>
 
     <div class="q-block">
-      <div class="q-label"><span class="q-tag">Q4</span> 판단 확신도 <span class="req">*</span></div>
-      <div class="q-hint">방금 판단에 대해 얼마나 확신하나요?</div>
+      <div class="q-label" data-role="q4-label">${t('q4Label')}</div>
+      <div class="q-hint" data-role="q4-hint">${t('q4Hint')}</div>
       <div class="likert">
-        <div class="likert-poles"><span>전혀 확신 없음</span><span>매우 확신함</span></div>
+        <div class="likert-poles"><span data-role="q4-low">${t('q4Low')}</span><span data-role="q4-high">${t('q4High')}</span></div>
         <div class="likert-row" id="conf-row-${slotId}"></div>
       </div>
     </div>
 
     <div class="nav-row">
-      <button class="btn-nav" onclick="goPrev()">← 이전</button>
+      <button class="btn-nav" data-role="btn-prev" onclick="goPrev()">${t('btnPrevFinal')}</button>
       <button class="btn-nav primary" id="btn-next-${dispIdx + 1}" onclick="goNext()" disabled>
-        ${isLast ? '마지막 단계 →' : '다음 이미지 →'}
+        ${isLast ? t('btnLast') : t('btnNext')}
       </button>
     </div>
-    <div class="nav-hint" id="hint-${dispIdx + 1}">Q1과 Q4는 필수 응답입니다</div>
+    <div class="nav-hint" id="hint-${dispIdx + 1}">${t('hintTrialRequired')}</div>
   `;
   return page;
+}
+
+function refreshDynamicI18n() {
+  MAIN_IDS.forEach((id, i) => {
+    const page = document.getElementById(`page-${i + 1}`);
+    if (!page) return;
+
+    const assignment = trialAssignments[id];
+    const total = MAIN_IDS.length;
+    page.querySelector('[data-role="trial-num"]').textContent = t('trialCounter', { idx: i + 1, total });
+    page.querySelector('[data-role="trial-badge"]').textContent = t('trialBadge', {
+      blurId: assignment?.blurId || '',
+      sceneNumber: assignment?.sceneNumber || i + 1
+    });
+    page.querySelector('[data-role="target-check"]').textContent = t('targetCheck');
+    page.querySelector('[data-role="judgment-image"]').textContent = t('judgmentImage');
+    page.querySelector('[data-role="q1-label"]').innerHTML = t('q1Label');
+    page.querySelector('[data-role="q1-hint"]').textContent = t('q1Hint');
+    page.querySelector('[data-role="q1-still"]').textContent = t('q1Still');
+    page.querySelector('[data-role="q1-moving"]').textContent = t('q1Moving');
+    page.querySelector('[data-role="q1-unsure"]').textContent = t('q1Unsure');
+    page.querySelector('[data-role="q2-label"]').innerHTML = t('q2Label');
+    page.querySelector('[data-role="q2-hint"]').innerHTML = t('q2Hint');
+    page.querySelector('[data-role="q3-label"]').childNodes[0].nodeValue = t('q3Label');
+    page.querySelector('[data-role="q3-multi"]').textContent = t('q3Multi');
+    page.querySelector('[data-role="q3-hint"]').textContent = t('q3Hint');
+    page.querySelector('[data-role="q4-label"]').innerHTML = t('q4Label');
+    page.querySelector('[data-role="q4-hint"]').textContent = t('q4Hint');
+    page.querySelector('[data-role="q4-low"]').textContent = t('q4Low');
+    page.querySelector('[data-role="q4-high"]').textContent = t('q4High');
+    page.querySelector('[data-role="btn-prev"]').textContent = t('btnPrevFinal');
+
+    const nextBtn = document.getElementById(`btn-next-${i + 1}`);
+    if (nextBtn) nextBtn.textContent = i + 1 === MAIN_IDS.length ? t('btnLast') : t('btnNext');
+
+    const hint = document.getElementById(`hint-${i + 1}`);
+    if (hint && !isTrialComplete(id)) hint.textContent = t('hintTrialRequired');
+
+    const axisContainer = document.getElementById(`axis-${id}`);
+    const selectedAxis = responses[id].axis;
+    if (axisContainer) {
+      axisContainer.innerHTML = '';
+      buildAxisSelector(id);
+      if (selectedAxis) {
+        axisContainer.querySelector(`[data-val="${selectedAxis}"]`)?.classList.add('selected');
+      }
+    }
+
+    const cueContainer = document.getElementById(`cues-${id}`);
+    const selectedCues = [...responses[id].cues];
+    if (cueContainer) {
+      cueContainer.innerHTML = '';
+      buildCueCheckboxes(id);
+      selectedCues.forEach(val => {
+        const inp = cueContainer.querySelector(`input[value="${val}"]`);
+        if (inp) {
+          inp.checked = true;
+          inp.closest('.cue-item')?.classList.add('checked');
+        }
+      });
+      responses[id].cues = selectedCues;
+    }
+  });
 }
 
 // ════════════════════════════════
@@ -680,6 +975,7 @@ function handleQ1(id, val) {
     responses[id].axis = null;
     document.querySelectorAll(`#axis-${id} .axis-btn`).forEach(b => b.classList.remove('selected'));
   }
+  markResponseTime(id, 'q1_state');
   updateNav(); persistDraft();
 }
 function selectChoice(el, group, val) {
@@ -710,6 +1006,12 @@ function showPage(idx) {
   const id = idx === 0 ? 'page-0' : idx === TOTAL_PAGES - 1 ? 'page-final' : `page-${idx}`;
   document.getElementById(id)?.classList.add('active');
   currentPage = idx;
+
+  if (idx > 0 && idx <= MAIN_IDS.length) {
+    const trialId = MAIN_IDS[idx - 1];
+    ensureTrialTimerStarted(trialId);
+  }
+
   window.scrollTo({ top: 0, behavior: 'smooth' });
   updateProgress();
   updateNav();
@@ -723,7 +1025,7 @@ function updateNav() {
   const hint0 = document.getElementById('hint-0');
   const ok0 = isIntroComplete();
   if (btnStart) btnStart.disabled = !ok0;
-  if (hint0) hint0.textContent = ok0 ? '' : '필수 항목(식별자, 경험 수준)을 입력하면 시작할 수 있습니다';
+  if (hint0) hint0.textContent = ok0 ? '' : t('hintIntro');
 
   // trials
   MAIN_IDS.forEach((id, i) => {
@@ -731,7 +1033,7 @@ function updateNav() {
     const hint = document.getElementById(`hint-${i + 1}`);
     const done = isTrialComplete(id);
     if (btn) btn.disabled = !done;
-    if (hint) hint.textContent = done ? '' : 'Q1과 Q4(확신도)는 필수 응답입니다';
+    if (hint) hint.textContent = done ? '' : t('hintTrialRequired');
   });
 }
 
@@ -742,8 +1044,8 @@ function updateProgress() {
   document.getElementById('pct-fill').style.width = pct + '%';
 
   const txt =
-    currentPage === 0 ? '시작 전' :
-    currentPage === TOTAL_PAGES - 1 ? `${done} / ${total} 완료` :
+    currentPage === 0 ? t('progressBefore') :
+    currentPage === TOTAL_PAGES - 1 ? t('progressDone', { done, total }) :
     `${currentPage} / ${total}`;
   document.getElementById('pct-txt').textContent = txt;
 }
@@ -762,6 +1064,22 @@ function collectPayload() {
       experience: document.querySelector('[name="exp"]:checked')?.value || null
     },
     trials: MAIN_IDS.map(id => ({
+      ...(function () {
+        const t = timings[id] || {};
+        const trialStart = t.trialStart || null;
+        const first = t.firstResponse || null;
+        const last = t.lastResponse || null;
+        return {
+          timing: {
+            trial_start_ms: trialStart,
+            first_response_ms: first,
+            last_response_ms: last,
+            time_to_first_response_ms: trialStart && first ? first - trialStart : null,
+            total_response_time_ms: trialStart && last ? last - trialStart : null,
+            question_times_ms: t.questionTimes || {}
+          }
+        };
+      })(),
       trial_slot: id,
       scene_id: trialAssignments[id]?.sceneId || id,
       scene_number: trialAssignments[id]?.sceneNumber ?? null,
@@ -806,6 +1124,13 @@ function hydrateFromPayload(payload) {
         responses[id].cues = trial.q3_cues;
       }
       if (trial.q4_confidence) selectLikert(`conf-row-${id}`, id, Number(trial.q4_confidence));
+
+      if (trial.timing && timings[id]) {
+        timings[id].trialStart = trial.timing.trial_start_ms ?? null;
+        timings[id].firstResponse = trial.timing.first_response_ms ?? null;
+        timings[id].lastResponse = trial.timing.last_response_ms ?? null;
+        timings[id].questionTimes = trial.timing.question_times_ms || {};
+      }
     });
     document.getElementById('open-feedback-1').value = payload.comments?.difficult_images || '';
     document.getElementById('open-feedback-2').value = payload.comments?.other_feedback || '';
@@ -842,12 +1167,14 @@ async function handleSubmit() {
 // INIT
 // ════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
+  setLanguage('en');
+
   const urlParams = new URLSearchParams(window.location.search);
   const workerIdFromUrl = urlParams.get('workerId');
   const initId = workerIdFromUrl || generateRndId();
   document.getElementById('participant-id').value = initId;
   if (!workerIdFromUrl)
-    setIdStatus('자동 생성된 식별자입니다. MTurk 참여자는 Worker ID로 교체해주세요.', 'warn');
+    setIdStatus(t('statusAutoId'), 'warn');
 
   const hasGroupOverride = urlParams.get('group') !== null;
   let groupId = resolveGroupId();
@@ -859,7 +1186,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (typeof assigned?.groupId === 'number') groupId = assigned.groupId;
       if (assigned?.payload) backendPayload = assigned.payload;
     } catch (err) {
-      setIdStatus(`서버 그룹 배정 실패: ${err.message}. 로컬 기준으로 진행합니다.`, 'warn');
+      setIdStatus(t('statusAssignFail', { msg: err.message }), 'warn');
     }
   }
 
@@ -880,26 +1207,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const imgBox = document.getElementById(`imgbox-${slotId}`);
     if (imgBox) imgBox.innerHTML = `
-      <img src="${assignment.imagePath}" alt="판단 이미지 ${i + 1}"
-           onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>이미지를 불러오지 못했습니다</div><div class=\\'fn\\'>${assignment.imagePath}</div>'">
+       <img src="${assignment.imagePath}" alt="image ${i + 1}"
+         onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>${t('loadFail')}</div><div class=\\'fn\\'>${assignment.imagePath}</div>'">
     `;
     const bboxBox = document.getElementById(`imgbox-bbox-${slotId}`);
     if (bboxBox) bboxBox.innerHTML = `
-      <img src="${assignment.bboxPath}" alt="대상 확인 이미지 ${i + 1}"
-           onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>이미지를 불러오지 못했습니다</div><div class=\\'fn\\'>${assignment.bboxPath}</div>'">
+       <img src="${assignment.bboxPath}" alt="target image ${i + 1}"
+         onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>${t('loadFail')}</div><div class=\\'fn\\'>${assignment.bboxPath}</div>'">
     `;
   });
 
+      refreshDynamicI18n();
+
   if (backendPayload) {
     hydrateFromPayload(backendPayload);
-    setIdStatus('서버에 저장된 기존 응답을 불러왔습니다. 수정 후 다시 제출하면 업데이트됩니다.', 'ok');
+    setIdStatus(t('statusLoadedServer'), 'ok');
   } else {
     const draft = readLocalDraft(initId);
     if (draft?.payload) {
       hydrateFromPayload(draft.payload);
       setIdStatus(draft.submitted
-        ? '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출할 수 있습니다.'
-        : '임시 저장된 응답을 불러왔습니다.', 'ok');
+        ? t('statusLoadedSubmitted')
+        : t('statusLoadedDraft'), 'ok');
     }
   }
 
