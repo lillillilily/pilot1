@@ -361,9 +361,11 @@ textarea { min-height:68px; resize:vertical; }
 // ════════════════════════════════
 // CONFIG
 // ════════════════════════════════
+const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxGAlBprfrT5MU_CC7J4B4IqeI6goTH4h01VvUWQKAmQhoO0TzZ_bwT2uqpguXMJUgKhQ/exec';
+
 const CONFIG = {
   studyId: 'exp1_scene_perception',
-  submissionEndpoint: '',        // POST endpoint (옵션)
+  submissionEndpoint: APPS_SCRIPT_WEBAPP_URL, // Google Apps Script Web App URL
   storagePrefix: 'blurgen-humanstudy',
   numScenes: 16,                 // ← 씬 수 조정하는 곳
   numBlurLevels: 5,
@@ -403,14 +405,46 @@ function setIdStatus(msg, tone = 'ok') {
   b.textContent = msg;
 }
 function handleIdChange() {
-  const draft = readLocalDraft(getParticipantId());
+  const pid = getParticipantId();
+  const draft = readLocalDraft(pid);
   if (draft?.payload) {
     hydrateFromPayload(draft.payload);
     setIdStatus(draft.submitted
       ? '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출하면 업데이트됩니다.'
       : '임시 저장된 응답을 불러왔습니다.', 'ok');
+  } else if (pid) {
+    clearAllResponses();
+    setIdStatus('해당 식별자의 저장된 응답이 없어 새로 시작합니다.', 'warn');
   }
   updateNav();
+}
+
+function clearAllResponses() {
+  MAIN_IDS.forEach(id => {
+    responses[id] = { q1: null, axis: null, cues: [], conf: null };
+
+    document.querySelectorAll(`[name="q1-${id}"]`).forEach(r => {
+      r.checked = false;
+      r.closest('.choice')?.classList.remove('selected');
+    });
+
+    document.querySelectorAll(`#axis-${id} .axis-btn`).forEach(b => b.classList.remove('selected'));
+    document.getElementById(`cond-${id}-axis`)?.classList.remove('visible');
+
+    const cueContainer = document.getElementById(`cues-${id}`);
+    cueContainer?.querySelectorAll('input[type="checkbox"]').forEach(inp => {
+      inp.checked = false;
+      inp.closest('.cue-item')?.classList.remove('checked');
+    });
+
+    for (let i = 1; i <= 5; i++) {
+      document.getElementById(`l-conf-row-${id}-${i}`)?.classList.remove('selected');
+    }
+  });
+
+  document.getElementById('open-feedback-1').value = '';
+  document.getElementById('open-feedback-2').value = '';
+  updateProgress();
 }
 
 // ════════════════════════════════
@@ -449,7 +483,10 @@ function shuffleArray(arr) {
 }
 function resolveGroupId() {
   const g = new URLSearchParams(window.location.search).get('group');
-  if (g !== null && !isNaN(+g)) return (+g) % CONFIG.numBlurLevels;
+  if (g !== null && !isNaN(+g)) {
+    const n = Number(g);
+    return ((n % CONFIG.numBlurLevels) + CONFIG.numBlurLevels) % CONFIG.numBlurLevels;
+  }
   return Math.floor(Math.random() * CONFIG.numBlurLevels);
 }
 function buildTrialAssignments(groupId) {
@@ -460,6 +497,22 @@ function buildTrialAssignments(groupId) {
              imagePath: `${CONFIG.imageBasePath}/B${bl}/scene${n}.png`,
              bboxPath: `${CONFIG.bboxBasePath}/scene${n}.png` };
   }));
+}
+
+async function assignGroupFromBackend(participantId) {
+  if (!CONFIG.submissionEndpoint || !participantId) return null;
+
+  const url = new URL(CONFIG.submissionEndpoint);
+  url.searchParams.set('action', 'assign');
+  url.searchParams.set('studyId', CONFIG.studyId);
+  url.searchParams.set('workerId', participantId);
+
+  const res = await fetch(url.toString(), { method: 'GET' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data?.ok === false) {
+    throw new Error(data?.error || `HTTP ${res.status}`);
+  }
+  return data;
 }
 
 // ════════════════════════════════
@@ -670,7 +723,7 @@ function updateNav() {
   const hint0 = document.getElementById('hint-0');
   const ok0 = isIntroComplete();
   if (btnStart) btnStart.disabled = !ok0;
-  if (hint0) hint0.textContent = ok0 ? '' : '식별자와 경험 수준을 입력하면 시작할 수 있습니다';
+  if (hint0) hint0.textContent = ok0 ? '' : '필수 항목(식별자, 경험 수준)을 입력하면 시작할 수 있습니다';
 
   // trials
   MAIN_IDS.forEach((id, i) => {
@@ -704,6 +757,7 @@ function collectPayload() {
     meta: {
       timestamp: new Date().toISOString(),
       participant_id: getParticipantId(),
+      worker_id: getParticipantId(),
       group_id: window._groupId ?? null,
       experience: document.querySelector('[name="exp"]:checked')?.value || null
     },
@@ -787,7 +841,7 @@ async function handleSubmit() {
 // ════════════════════════════════
 // INIT
 // ════════════════════════════════
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const workerIdFromUrl = urlParams.get('workerId');
   const initId = workerIdFromUrl || generateRndId();
@@ -795,7 +849,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!workerIdFromUrl)
     setIdStatus('자동 생성된 식별자입니다. MTurk 참여자는 Worker ID로 교체해주세요.', 'warn');
 
-  const groupId = resolveGroupId();
+  const hasGroupOverride = urlParams.get('group') !== null;
+  let groupId = resolveGroupId();
+  let backendPayload = null;
+
+  if (!hasGroupOverride && CONFIG.submissionEndpoint && initId) {
+    try {
+      const assigned = await assignGroupFromBackend(initId);
+      if (typeof assigned?.groupId === 'number') groupId = assigned.groupId;
+      if (assigned?.payload) backendPayload = assigned.payload;
+    } catch (err) {
+      setIdStatus(`서버 그룹 배정 실패: ${err.message}. 로컬 기준으로 진행합니다.`, 'warn');
+    }
+  }
+
   window._groupId = groupId;
   const trials = buildTrialAssignments(groupId);
 
@@ -823,12 +890,17 @@ document.addEventListener('DOMContentLoaded', () => {
     `;
   });
 
-  const draft = readLocalDraft(initId);
-  if (draft?.payload) {
-    hydrateFromPayload(draft.payload);
-    setIdStatus(draft.submitted
-      ? '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출할 수 있습니다.'
-      : '임시 저장된 응답을 불러왔습니다.', 'ok');
+  if (backendPayload) {
+    hydrateFromPayload(backendPayload);
+    setIdStatus('서버에 저장된 기존 응답을 불러왔습니다. 수정 후 다시 제출하면 업데이트됩니다.', 'ok');
+  } else {
+    const draft = readLocalDraft(initId);
+    if (draft?.payload) {
+      hydrateFromPayload(draft.payload);
+      setIdStatus(draft.submitted
+        ? '이 식별자의 기존 응답을 불러왔습니다. 수정 후 다시 제출할 수 있습니다.'
+        : '임시 저장된 응답을 불러왔습니다.', 'ok');
+    }
   }
 
   updateProgress();
