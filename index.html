@@ -374,7 +374,7 @@ const CONFIG = {
   numScenes: 16,                 // ← 씬 수 조정하는 곳
   numBlurLevels: 5,
   imageBasePath: './images',     // 블러 이미지: ./images/B{level}/scene{n}.png
-  bboxBasePath:  './images/bbox' // bbox 이미지: ./images/bbox/scene{n}.png
+  bboxBasePath:  './images/bbox' // bbox 이미지: ./images/bbox/B{level}/scene{n}.png
 };
 
 const MAIN_IDS = Array.from({ length: CONFIG.numScenes }, (_, i) => `s${i + 1}`);
@@ -721,7 +721,7 @@ function buildTrialAssignments(groupId) {
     const bl = (n + groupId) % CONFIG.numBlurLevels;
     return { sceneNumber: n, sceneId: `scene${n}`, blurLevel: bl, blurId: `B${bl}`,
              imagePath: `${CONFIG.imageBasePath}/B${bl}/scene${n}.png`,
-             bboxPath: `${CONFIG.bboxBasePath}/scene${n}.png` };
+             bboxPath: `${CONFIG.bboxBasePath}/B${bl}/scene${n}.png` };
   }));
 }
 
