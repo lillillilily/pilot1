@@ -874,8 +874,8 @@ async function assignGroupFromBackend(participantId) {
 const AXES = [
   { val: 'vertical',   icon: '↕', label: { ko: '세로축', en: 'Vertical Axis' }, sub: { ko: '위 ↔ 아래', en: 'Up ↔ Down' } },
   { val: 'horizontal', icon: '↔', label: { ko: '가로축', en: 'Horizontal Axis' }, sub: { ko: '왼쪽 ↔ 오른쪽', en: 'Left ↔ Right' } },
-  { val: 'diag_up',    icon: '↗', label: { ko: '우상향 대각축', en: 'Up-right Diagonal' }, sub: { ko: '↙ ↔ ↗', en: '↙ ↔ ↗' } },
-  { val: 'diag_down',  icon: '↖', label: { ko: '좌상향 대각축', en: 'Up-left Diagonal' }, sub: { ko: '↘ ↔ ↖', en: '↘ ↔ ↖' } },
+  { val: 'diag_up',    icon: '↙↗', label: { ko: '대각축 (좌하 ↔ 우상)', en: 'Diagonal Axis (Down-left ↔ Up-right)' }, sub: { ko: '좌하 ↔ 우상', en: 'Down-left ↔ Up-right' } },
+  { val: 'diag_down',  icon: '↖↘', label: { ko: '대각축 (좌상 ↔ 우하)', en: 'Diagonal Axis (Up-left ↔ Down-right)' }, sub: { ko: '좌상 ↔ 우하', en: 'Up-left ↔ Down-right' } },
   { val: 'unsure',     icon: '?', label: { ko: '판단하기 어렵다', en: 'Hard to tell' }, sub: { ko: '', en: '' } }
 ];
 function buildAxisSelector(id) {
