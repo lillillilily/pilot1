@@ -279,6 +279,7 @@ textarea { min-height:68px; resize:vertical; }
     <p id="instr-p1">각 이미지에서 <strong>가장 눈에 띄는 주요 대상</strong>을 기준으로 장면 상태를 직관적으로 판단해주세요.</p>
     <p id="instr-p2">이미지 품질보다는 <strong>장면이 어떻게 느껴지는지</strong>에 집중해 응답해주세요. 정답은 없으며, 첫 인상에 따라 응답해주세요.</p>
     <p id="instr-p3" style="margin-top:8px;">움직임 방향은 <strong>물체의 기울기와 관계없이 화면(이미지 프레임) 기준</strong>으로 판단해주세요.</p>
+    <p id="instr-p4" style="margin-top:8px;">대상 객체가 크거나 범위가 넓어 판단 기준이 모호한 경우에는, 제시된 bounding box의 중심점을 기준으로 응답해 주세요.</p>
   </div>
 
   <div class="ref-box">
@@ -432,6 +433,7 @@ const I18N = {
     instrP1: 'For each image, judge scene status intuitively based on the most visually salient main object.',
     instrP2: 'Please focus on how the scene feels rather than image quality. There are no right answers, so respond based on your first impression.',
     instrP3: 'Please judge movement direction relative to the screen (image frame), regardless of object tilt.',
+    instrP4: 'If the target object is large or its extent makes the judgment ambiguous, please base your response on the center point of the provided bounding box.',
     refLabel: 'Direction Reference',
     refNote: 'Direction is based on the screen frame.<br>Please use up/down/left/right of the screen even if the object itself is tilted.',
     secParticipant: 'Participant Information',
@@ -508,6 +510,7 @@ const I18N = {
     instrP1: '각 이미지에서 <strong>가장 눈에 띄는 주요 대상</strong>을 기준으로 장면 상태를 직관적으로 판단해주세요.',
     instrP2: '이미지 품질보다는 <strong>장면이 어떻게 느껴지는지</strong>에 집중해 응답해주세요. 정답은 없으며, 첫 인상에 따라 응답해주세요.',
     instrP3: '움직임 방향은 <strong>물체의 기울기와 관계없이 화면(이미지 프레임) 기준</strong>으로 판단해주세요.',
+    instrP4: '대상 객체가 크거나 범위가 넓어 판단 기준이 모호한 경우에는, 제시된 bounding box의 중심점을 기준으로 응답해 주세요.',
     refLabel: '방향 기준',
     refNote: '방향은 <strong>화면 기준</strong>입니다.<br>물체가 기울어져 있어도 화면의 위/아래/좌/우를 기준으로 판단해주세요.',
     secParticipant: '참여자 정보',
@@ -612,6 +615,7 @@ function applyStaticI18n() {
   setById('instr-p1', 'instrP1', true);
   setById('instr-p2', 'instrP2', true);
   setById('instr-p3', 'instrP3', true);
+  setById('instr-p4', 'instrP4', true);
   setById('ref-label', 'refLabel');
   setById('ref-note', 'refNote', true);
   setById('sec-participant', 'secParticipant');
@@ -909,7 +913,7 @@ const CUES = [
   { val: 'pose',    label: { ko: '물체의 자세나 형태', en: 'Object pose or shape' } },
   { val: 'context', label: { ko: '장면 전체의 맥락', en: 'Overall scene context' } },
   { val: 'prior',   label: { ko: '해당 물체에 대한 사전 지식', en: 'Prior knowledge about the object' } },
-  { val: 'other',   label: { ko: '기타', en: 'Other' } }
+  { val: 'other',   label: { ko: '해당 없음 / 잘 모르겠음', en: 'None of the above / Not sure' } }
 ];
 function buildCueCheckboxes(id) {
   const c = document.getElementById(`cues-${id}`);
