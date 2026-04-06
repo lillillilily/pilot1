@@ -108,6 +108,7 @@ body {
 .trial-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .trial-num { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; color: var(--muted); }
 .trial-badge {
+  display: none;
   font-family: var(--mono); font-size: 9px;
   background: var(--surface2); border: 1px solid var(--border);
   border-radius: 2px; padding: 2px 7px; color: var(--muted);
@@ -367,14 +368,33 @@ textarea { min-height:68px; resize:vertical; }
 // ════════════════════════════════
 const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxGAlBprfrT5MU_CC7J4B4IqeI6goTH4h01VvUWQKAmQhoO0TzZ_bwT2uqpguXMJUgKhQ/exec';
 
+const SCENE_FILES = [
+  'bus_000010',
+  'camel_000065',
+  'car-roundabout_000056',
+  'car-turn_000030',
+  'dance-jump_000000',
+  'drift-straight_000007',
+  'flamingo_000075',
+  'hockey_000011',
+  'mallard-fly_000010',
+  'paragliding-launch_000044',
+  'parkour_000082',
+  'soccerball_000037',
+  'swing_000050',
+  'train_000065'
+];
+const ALWAYS_JPG_SCENES = new Set(['camel_000065', 'dance-jump_000000', 'flamingo_000075']);
+
 const CONFIG = {
   studyId: 'exp1_scene_perception',
   submissionEndpoint: APPS_SCRIPT_WEBAPP_URL, // Google Apps Script Web App URL
   storagePrefix: 'blurgen-humanstudy',
-  numScenes: 16,                 // ← 씬 수 조정하는 곳
+  sceneFiles: SCENE_FILES,
+  numScenes: SCENE_FILES.length,
   numBlurLevels: 5,
-  imageBasePath: './images',     // 블러 이미지: ./images/B{level}/scene{n}.png
-  bboxBasePath:  './images/bbox' // bbox 이미지: ./images/bbox/B{level}/scene{n}.png
+  imageBasePath: './images',     // judgment images: ./images/B{level}/{scene}.{jpg|png}
+  bboxBasePath:  './images/bbox' // bbox images: ./images/bbox/B{level}/{scene}.png
 };
 
 const MAIN_IDS = Array.from({ length: CONFIG.numScenes }, (_, i) => `s${i + 1}`);
@@ -716,12 +736,19 @@ function resolveGroupId() {
   return Math.floor(Math.random() * CONFIG.numBlurLevels);
 }
 function buildTrialAssignments(groupId) {
-  return shuffleArray(Array.from({ length: CONFIG.numScenes }, (_, i) => {
+  return shuffleArray(CONFIG.sceneFiles.map((sceneFile, i) => {
     const n = i + 1;
     const bl = (n + groupId) % CONFIG.numBlurLevels;
-    return { sceneNumber: n, sceneId: `scene${n}`, blurLevel: bl, blurId: `B${bl}`,
-             imagePath: `${CONFIG.imageBasePath}/B${bl}/scene${n}.png`,
-             bboxPath: `${CONFIG.bboxBasePath}/B${bl}/scene${n}.png` };
+    const blurId = `B${String(bl).padStart(2, '0')}`;
+    const imageExt = bl === 0 || ALWAYS_JPG_SCENES.has(sceneFile) ? 'jpg' : 'png';
+    return {
+      sceneNumber: n,
+      sceneId: sceneFile,
+      blurLevel: bl,
+      blurId,
+      imagePath: `${CONFIG.imageBasePath}/${blurId}/${sceneFile}.${imageExt}`,
+      bboxPath: `${CONFIG.bboxBasePath}/${blurId}/${sceneFile}.png`
+    };
   }));
 }
 
