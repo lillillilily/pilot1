@@ -261,6 +261,8 @@ function getResponseHeaders_() {
     'participant_id',
     'submitted_at',
     'experience',
+    'self_report_careful',
+    'self_report_visibility',
     'comment_difficult_images',
     'comment_other_feedback',
     'num_trials'
@@ -323,6 +325,8 @@ function buildPlaceholderRecord_(studyId, workerId, groupId, now) {
     participant_id: workerId,
     submitted_at: '',
     experience: '',
+    self_report_careful: '',
+    self_report_visibility: '',
     comment_difficult_images: '',
     comment_other_feedback: '',
     num_trials: ''
@@ -332,6 +336,7 @@ function buildPlaceholderRecord_(studyId, workerId, groupId, now) {
 function buildParticipantRecord_(payload, existing) {
   const meta = payload.meta || {};
   const comments = payload.comments || {};
+  const selfReport = payload.self_report || {};
   const trials = Array.isArray(payload.trials) ? payload.trials : [];
   const now = new Date().toISOString();
   const record = {
@@ -344,6 +349,8 @@ function buildParticipantRecord_(payload, existing) {
     participant_id: sanitize_(meta.participant_id || meta.worker_id || ''),
     submitted_at: meta.timestamp || now,
     experience: sanitize_(meta.experience || ''),
+    self_report_careful: selfReport.careful ?? '',
+    self_report_visibility: selfReport.visibility ?? '',
     comment_difficult_images: comments.difficult_images || '',
     comment_other_feedback: comments.other_feedback || '',
     num_trials: trials.length

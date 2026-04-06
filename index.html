@@ -337,6 +337,24 @@ textarea { min-height:68px; resize:vertical; }
     <h1 id="final-title">진행한 설문에 관해 전반적인 느낌을 남겨주세요</h1>
   </div>
 
+  <div class="sec-title" id="check-title">간단한 확인 <span style="font-weight:300;font-size:10px;letter-spacing:0">(선택)</span></div>
+
+  <div class="card">
+    <div class="q-label" id="selfreport-careful-label">나는 설문 전반에 걸쳐 주의 깊게 응답했다.</div>
+    <div class="likert" style="margin-top:10px;">
+      <div class="likert-poles"><span id="selfreport-careful-low">전혀 동의하지 않음</span><span id="selfreport-careful-high">매우 동의함</span></div>
+      <div class="likert-row" id="self-careful-row"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="q-label" id="selfreport-visibility-label">이미지는 판단하기에 충분히 선명하게 보였다.</div>
+    <div class="likert" style="margin-top:10px;">
+      <div class="likert-poles"><span id="selfreport-visibility-low">전혀 동의하지 않음</span><span id="selfreport-visibility-high">매우 동의함</span></div>
+      <div class="likert-row" id="self-visibility-row"></div>
+    </div>
+  </div>
+
   <div class="sec-title" id="free-title">자유 응답 <span style="font-weight:300;font-size:10px;letter-spacing:0">(선택)</span></div>
 
   <div class="card">
@@ -353,6 +371,7 @@ textarea { min-height:68px; resize:vertical; }
     <button class="btn-nav primary" id="btn-submit-final" onclick="handleSubmit()">응답 제출하기</button>
   </div>
   <div class="nav-hint" id="final-hint">자유 응답은 선택 사항입니다</div>
+  <div id="submit-status" class="status-box" style="margin-top:12px"></div>
 </div>
 
 <div id="thankyou">
@@ -429,6 +448,12 @@ const I18N = {
     hintIntro: 'You can start after entering required items (identifier and experience).',
     finalHdrLabel: 'Final Step',
     finalTitle: 'Please share your overall impressions',
+    checkTitle: 'Brief Check <span class="req">*</span>',
+    selfReportCareful: 'I responded carefully throughout the study. <span class="req">*</span>',
+    selfReportVisibility: 'The images were clear enough for me to make a judgment. <span class="req">*</span>',
+    selfReportLow: 'Strongly disagree',
+    selfReportHigh: 'Strongly agree',
+    finalHint: 'The two questions above are required. Open-ended feedback is optional.',
     freeTitle: 'Open Feedback <span style="font-weight:300;font-size:10px;letter-spacing:0">(Optional)</span>',
     fb1Label: 'Were any questions or images ambiguous or difficult to interpret?',
     fb2Label: 'Any other comments or thoughts',
@@ -497,6 +522,12 @@ const I18N = {
     hintIntro: '필수 항목(식별자, 경험 수준)을 입력하면 시작할 수 있습니다',
     finalHdrLabel: '마지막 단계입니다.',
     finalTitle: '진행한 설문에 관해 전반적인 느낌을 남겨주세요',
+    checkTitle: '간단한 확인 <span class="req">*</span>',
+    selfReportCareful: '나는 설문 전반에 걸쳐 주의 깊게 응답했다. <span class="req">*</span>',
+    selfReportVisibility: '이미지는 판단하기에 충분히 선명하게 보였다. <span class="req">*</span>',
+    selfReportLow: '전혀 동의하지 않음',
+    selfReportHigh: '매우 동의함',
+    finalHint: '위의 두 문항은 필수 응답이고, 자유 의견은 선택적으로 작성하실 수 있습니다.',
     freeTitle: '자유 응답 <span style="font-weight:300;font-size:10px;letter-spacing:0">(선택)</span>',
     fb1Label: '질문이 모호했거나 이미지가 이해하기 어려운 항목이 있었나요?',
     fb2Label: '기타 의견이나 느낀 점',
@@ -591,6 +622,13 @@ function applyStaticI18n() {
   setById('btn-start', 'btnStart');
   setById('final-hdr-label', 'finalHdrLabel');
   setById('final-title', 'finalTitle');
+  setById('check-title', 'checkTitle', true);
+  setById('selfreport-careful-label', 'selfReportCareful');
+  setById('selfreport-visibility-label', 'selfReportVisibility');
+  setById('selfreport-careful-low', 'selfReportLow');
+  setById('selfreport-careful-high', 'selfReportHigh');
+  setById('selfreport-visibility-low', 'selfReportLow');
+  setById('selfreport-visibility-high', 'selfReportHigh');
   setById('free-title', 'freeTitle', true);
   setById('fb1-label', 'fb1Label');
   setById('fb2-label', 'fb2Label');
@@ -607,6 +645,9 @@ function applyStaticI18n() {
   const feedback2 = document.getElementById('open-feedback-2');
   if (feedback1) feedback1.placeholder = t('feedbackPlaceholder');
   if (feedback2) feedback2.placeholder = t('feedbackPlaceholder');
+
+  buildSelfReportLikert('self-careful-row', 'careful');
+  buildSelfReportLikert('self-visibility-row', 'visibility');
 }
 
 // 페이지 인덱스: 0=인트로, 1..N=트라이얼, N+1=파이널
@@ -622,6 +663,10 @@ MAIN_IDS.forEach(id => {
 });
 
 const trialAssignments = {};
+const selfReport = {
+  careful: null,
+  visibility: null
+};
 let isHydrating = false;
 
 // ════════════════════════════════
@@ -640,6 +685,18 @@ function getParticipantId() {
 function setIdStatus(msg, tone = 'ok') {
   const b = document.getElementById('id-status');
   if (!b) return;
+  b.className = `status-box show ${tone}`;
+  b.textContent = msg;
+}
+
+function setSubmitStatus(msg = '', tone = 'ok') {
+  const b = document.getElementById('submit-status');
+  if (!b) return;
+  if (!msg) {
+    b.className = 'status-box';
+    b.textContent = '';
+    return;
+  }
   b.className = `status-box show ${tone}`;
   b.textContent = msg;
 }
@@ -686,6 +743,13 @@ function clearAllResponses() {
       document.getElementById(`l-conf-row-${id}-${i}`)?.classList.remove('selected');
     }
   });
+
+  selfReport.careful = null;
+  selfReport.visibility = null;
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`l-self-careful-${i}`)?.classList.remove('selected');
+    document.getElementById(`l-self-visibility-${i}`)?.classList.remove('selected');
+  }
 
   document.getElementById('open-feedback-1').value = '';
   document.getElementById('open-feedback-2').value = '';
@@ -879,6 +943,28 @@ function selectLikert(containerId, trialId, val) {
   responses[trialId].conf = val;
   markResponseTime(trialId, 'q4_confidence');
   updateNav(); persistDraft();
+}
+
+function buildSelfReportLikert(containerId, key) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = [1, 2, 3, 4, 5].map(n =>
+    `<div class="l-cell"><div class="l-btn" id="l-self-${key}-${n}"
+      onclick="selectSelfReportLikert('${key}',${n})">${n}</div></div>`
+  ).join('');
+
+  if (selfReport[key] != null) {
+    selectSelfReportLikert(key, selfReport[key]);
+  }
+}
+
+function selectSelfReportLikert(key, val) {
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById(`l-self-${key}-${i}`)?.classList.toggle('selected', i === val);
+  }
+  selfReport[key] = val;
+  updateNav();
+  persistDraft();
 }
 
 // ════════════════════════════════
@@ -1097,6 +1183,10 @@ function isIntroComplete() {
          !!document.querySelector('[name="exp"]:checked');
 }
 
+function isFinalComplete() {
+  return selfReport.careful != null && selfReport.visibility != null;
+}
+
 function showPage(idx) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const id = idx === 0 ? 'page-0' : idx === TOTAL_PAGES - 1 ? 'page-final' : `page-${idx}`;
@@ -1131,6 +1221,13 @@ function updateNav() {
     if (btn) btn.disabled = !done;
     if (hint) hint.textContent = done ? '' : t('hintTrialRequired');
   });
+
+  // final
+  const finalBtn = document.getElementById('btn-submit-final');
+  const finalHint = document.getElementById('final-hint');
+  const finalDone = isFinalComplete();
+  if (finalBtn) finalBtn.disabled = !finalDone;
+  if (finalHint) finalHint.textContent = finalDone ? t('finalHint') : t('finalHint');
 }
 
 function updateProgress() {
@@ -1187,6 +1284,10 @@ function collectPayload() {
       q3_cues: responses[id].cues,
       q4_confidence: responses[id].conf
     })),
+    self_report: {
+      careful: selfReport.careful,
+      visibility: selfReport.visibility
+    },
     comments: {
       difficult_images: document.getElementById('open-feedback-1')?.value || '',
       other_feedback: document.getElementById('open-feedback-2')?.value || ''
@@ -1228,6 +1329,12 @@ function hydrateFromPayload(payload) {
         timings[id].questionTimes = trial.timing.question_times_ms || {};
       }
     });
+    if (payload.self_report?.careful != null) {
+      selectSelfReportLikert('careful', Number(payload.self_report.careful));
+    }
+    if (payload.self_report?.visibility != null) {
+      selectSelfReportLikert('visibility', Number(payload.self_report.visibility));
+    }
     document.getElementById('open-feedback-1').value = payload.comments?.difficult_images || '';
     document.getElementById('open-feedback-2').value = payload.comments?.other_feedback || '';
   } finally {
@@ -1292,17 +1399,34 @@ async function submitPayloadToBackend(payload) {
 
 async function handleSubmit() {
   const payload = collectPayload();
+  const submitBtn = document.getElementById('btn-submit-final');
+  const prevBtn = document.getElementById('btn-prev-final');
+
   console.log('=== PAYLOAD ===', JSON.stringify(payload, null, 2));
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = t('btnSubmitting');
+  }
+  if (prevBtn) prevBtn.disabled = true;
+  setSubmitStatus(t('submitInProgress'), 'warn');
+
   if (CONFIG.submissionEndpoint) {
     try {
       await submitPayloadToBackend(payload);
     } catch (err) {
       persistDraft(false);
-      alert(`제출 중 오류: ${err.message}`);
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = t('btnSubmitFinal');
+      }
+      if (prevBtn) prevBtn.disabled = false;
+      setSubmitStatus('', 'warn');
+      alert(`${t('submitErrorPrefix')}: ${err.message}`);
       return;
     }
   }
   persistDraft(true);
+  setSubmitStatus('', 'ok');
   document.querySelector('.sticky').style.display = 'none';
   document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
   document.getElementById('thankyou').style.display = 'block';
