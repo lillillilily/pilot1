@@ -448,9 +448,9 @@ const I18N = {
     hintIntro: 'You can start after entering required items (identifier and experience).',
     finalHdrLabel: 'Final Step',
     finalTitle: 'Please share your overall impressions',
-    checkTitle: 'Brief Check <span class="req">*</span>',
-    selfReportCareful: 'I responded carefully throughout the study. <span class="req">*</span>',
-    selfReportVisibility: 'The images were clear enough for me to make a judgment. <span class="req">*</span>',
+    checkTitle: 'Brief Check *',
+    selfReportCareful: 'I responded carefully throughout the study. *',
+    selfReportVisibility: 'The images were clear enough for me to make a judgment. *',
     selfReportLow: 'Strongly disagree',
     selfReportHigh: 'Strongly agree',
     finalHint: 'The two questions above are required. Open-ended feedback is optional.',
@@ -460,7 +460,9 @@ const I18N = {
     feedbackPlaceholder: 'Write freely here.',
     btnPrevFinal: '← Previous',
     btnSubmitFinal: 'Submit Responses',
-    finalHint: 'Open feedback is optional',
+    btnSubmitting: 'Submitting...',
+    submitInProgress: 'Your responses are being submitted. Please wait a moment for the completion message.',
+    submitErrorPrefix: 'Submission error',
     thankyouTitle: 'Thank you for your participation',
     thankyouMsg: 'Your responses were saved successfully.<br>You can revisit with the same identifier to update responses.',
     progressBefore: 'Before start',
@@ -522,9 +524,9 @@ const I18N = {
     hintIntro: '필수 항목(식별자, 경험 수준)을 입력하면 시작할 수 있습니다',
     finalHdrLabel: '마지막 단계입니다.',
     finalTitle: '진행한 설문에 관해 전반적인 느낌을 남겨주세요',
-    checkTitle: '간단한 확인 <span class="req">*</span>',
-    selfReportCareful: '나는 설문 전반에 걸쳐 주의 깊게 응답했다. <span class="req">*</span>',
-    selfReportVisibility: '이미지는 판단하기에 충분히 선명하게 보였다. <span class="req">*</span>',
+    checkTitle: '간단한 확인 *',
+    selfReportCareful: '나는 설문 전반에 걸쳐 주의 깊게 응답했다. *',
+    selfReportVisibility: '이미지는 판단하기에 충분히 선명하게 보였다. *',
     selfReportLow: '전혀 동의하지 않음',
     selfReportHigh: '매우 동의함',
     finalHint: '위의 두 문항은 필수 응답이고, 자유 의견은 선택적으로 작성하실 수 있습니다.',
@@ -534,7 +536,9 @@ const I18N = {
     feedbackPlaceholder: '자유롭게 작성해주세요.',
     btnPrevFinal: '← 이전',
     btnSubmitFinal: '응답 제출하기',
-    finalHint: '자유 응답은 선택 사항입니다',
+    btnSubmitting: '제출 중...',
+    submitInProgress: '응답을 제출하는 중입니다. 완료 메시지가 나타날 때까지 잠시만 기다려 주세요.',
+    submitErrorPrefix: '제출 중 오류',
     thankyouTitle: '참여해주셔서 감사합니다',
     thankyouMsg: '응답이 정상적으로 저장되었습니다.<br>식별자를 메모해두셨다면 같은 번호로 재접속해 응답을 수정할 수 있습니다.',
     progressBefore: '시작 전',
@@ -623,8 +627,8 @@ function applyStaticI18n() {
   setById('final-hdr-label', 'finalHdrLabel');
   setById('final-title', 'finalTitle');
   setById('check-title', 'checkTitle', true);
-  setById('selfreport-careful-label', 'selfReportCareful');
-  setById('selfreport-visibility-label', 'selfReportVisibility');
+  setById('selfreport-careful-label', 'selfReportCareful', true);
+  setById('selfreport-visibility-label', 'selfReportVisibility', true);
   setById('selfreport-careful-low', 'selfReportLow');
   setById('selfreport-careful-high', 'selfReportHigh');
   setById('selfreport-visibility-low', 'selfReportLow');
