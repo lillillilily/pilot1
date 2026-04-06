@@ -393,6 +393,7 @@ const CONFIG = {
   sceneFiles: SCENE_FILES,
   numScenes: SCENE_FILES.length,
   numBlurLevels: 5,
+  assetVersion: '20260406-1',
   imageBasePath: './images',     // judgment images: ./images/B{level}/{scene}.png
   bboxBasePath:  './images/bbox' // bbox images: ./images/bbox/B{level}/{scene}.png
 };
@@ -759,6 +760,7 @@ function resolveGroupId() {
 }
 function buildTrialAssignments(groupId, participantId = '') {
   const assignmentSeed = `${CONFIG.studyId}:${participantId || 'anon'}:g${groupId}`;
+  const assetSuffix = CONFIG.assetVersion ? `?v=${encodeURIComponent(CONFIG.assetVersion)}` : '';
   return shuffleArray(CONFIG.sceneFiles.map((sceneFile, i) => {
     const n = i + 1;
     const bl = (n + groupId) % CONFIG.numBlurLevels;
@@ -769,8 +771,8 @@ function buildTrialAssignments(groupId, participantId = '') {
       sceneId: sceneFile,
       blurLevel: bl,
       blurId,
-      imagePath: `${CONFIG.imageBasePath}/${blurId}/${sceneFile}.${imageExt}`,
-      bboxPath: `${CONFIG.bboxBasePath}/${blurId}/${sceneFile}.png`
+      imagePath: `${CONFIG.imageBasePath}/${blurId}/${sceneFile}.${imageExt}${assetSuffix}`,
+      bboxPath: `${CONFIG.bboxBasePath}/${blurId}/${sceneFile}.png${assetSuffix}`
     };
   }), assignmentSeed);
 }
