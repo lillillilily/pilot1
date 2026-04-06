@@ -55,15 +55,32 @@ function initializeTexts() {
 
 function generateTrials() {
     trials = [];
-    for (let scene = 1; scene <= CONFIG.numScenes; scene++) {
-        for (const blur of CONFIG.blurLevels) {
-            trials.push({
-                scene: scene,
-                blurLevel: blur,
-                imagePath: CONFIG.imageFolder + CONFIG.imagePattern
-                    .replace('{scene}', scene)
-                    .replace('{blur}', blur)
+
+    if (Array.isArray(CONFIG.sceneFiles) && CONFIG.sceneFiles.length && Array.isArray(CONFIG.blurFolders) && CONFIG.blurFolders.length) {
+        CONFIG.sceneFiles.forEach((fileName, index) => {
+            CONFIG.blurFolders.forEach((folderName, blurIndex) => {
+                trials.push({
+                    scene: index + 1,
+                    sceneKey: fileName.replace(/\.[^.]+$/, ''),
+                    fileName,
+                    blurLevel: blurIndex,
+                    blurFolder: folderName,
+                    imagePath: `${CONFIG.imageFolder}${folderName}/${fileName}`
+                });
             });
+        });
+    } else {
+        for (let scene = 1; scene <= CONFIG.numScenes; scene++) {
+            for (const blur of CONFIG.blurLevels) {
+                trials.push({
+                    scene: scene,
+                    sceneKey: String(scene),
+                    blurLevel: blur,
+                    imagePath: CONFIG.imageFolder + CONFIG.imagePattern
+                        .replace('{scene}', scene)
+                        .replace('{blur}', blur)
+                });
+            }
         }
     }
 
@@ -82,7 +99,13 @@ function startExperiment() {
 
 function showTrial() {
     const trial = trials[currentTrialIndex];
-    document.getElementById('trialImage').src = trial.imagePath;
+    const trialImage = document.getElementById('trialImage');
+
+    trialImage.onerror = () => {
+        console.error('Image failed to load:', trial.imagePath);
+        trialImage.alt = `Image failed to load: ${trial.imagePath}`;
+    };
+    trialImage.src = trial.imagePath;
 
     currentResponse = { direction: null, confidence: null };
     document.querySelectorAll('.direction-btn').forEach((btn) => btn.classList.remove('selected'));
@@ -116,15 +139,20 @@ function checkComplete() {
 
 function nextTrial() {
     const trial = trials[currentTrialIndex];
+    const groundTruth = CONFIG.groundTruth?.[trial.sceneKey] ?? CONFIG.groundTruth?.[trial.scene] ?? null;
+
     results.push({
         participantId: participantId,
         trialIndex: currentTrialIndex + 1,
         scene: trial.scene,
+        sceneKey: trial.sceneKey || null,
+        fileName: trial.fileName || null,
         blurLevel: trial.blurLevel,
-        groundTruth: CONFIG.groundTruth[trial.scene] || null,
+        blurFolder: trial.blurFolder || null,
+        groundTruth,
         response: currentResponse.direction,
         confidence: currentResponse.confidence,
-        correct: CONFIG.groundTruth[trial.scene] === currentResponse.direction ? 1 : 0,
+        correct: groundTruth ? (groundTruth === currentResponse.direction ? 1 : 0) : null,
         timestamp: new Date().toISOString()
     });
 
