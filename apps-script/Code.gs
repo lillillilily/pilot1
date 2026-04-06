@@ -27,6 +27,11 @@ function doGet(e) {
       return jsonOutput_(lookupParticipant_(studyId, workerId));
     }
 
+    if (action === 'submit') {
+      const payload = parsePayloadFromRequest_('', e && e.parameter ? e.parameter : {});
+      return jsonOutput_(savePayload_(payload));
+    }
+
     return jsonOutput_({ ok: false, error: `Unknown action: ${action}` });
   } catch (error) {
     logDebug_('doGet:error', { message: error.message, stack: error.stack });
@@ -35,14 +40,23 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  try {
+    const rawBody = e && e.postData && e.postData.contents ? e.postData.contents : '';
+    logDebug_('doPost:raw', { rawBody });
+
+    const payload = parsePayloadFromRequest_(rawBody, e && e.parameter ? e.parameter : {});
+    return jsonOutput_(savePayload_(payload));
+  } catch (error) {
+    logDebug_('doPost:error', { message: error.message, stack: error.stack });
+    return jsonOutput_({ ok: false, error: error.message });
+  }
+}
+
+function savePayload_(payload) {
   const lock = LockService.getScriptLock();
   lock.waitLock(5000);
 
   try {
-    const rawBody = e && e.postData && e.postData.contents ? e.postData.contents : '{}';
-    logDebug_('doPost:raw', { rawBody });
-
-    const payload = safeParseJson_(rawBody, {});
     const studyId = sanitize_(payload.study_id || 'default_study');
 
     // Be tolerant here: accept either worker_id or participant_id.
@@ -51,8 +65,8 @@ function doPost(e) {
     );
 
     if (!workerId) {
-      logDebug_('doPost:missingWorkerId', { payload });
-      return jsonOutput_({ ok: false, error: 'worker_id is required' });
+      logDebug_('savePayload:missingWorkerId', { payload });
+      return { ok: false, error: 'worker_id is required' };
     }
 
     const sheet = getResponseSheet_();
@@ -85,7 +99,7 @@ function doPost(e) {
       sheet.appendRow(rowValues);
     }
 
-    logDebug_('doPost:success', {
+    logDebug_('savePayload:success', {
       studyId,
       workerId,
       groupId,
@@ -94,13 +108,41 @@ function doPost(e) {
       spreadsheetUrl: getSpreadsheet_().getUrl()
     });
 
-    return jsonOutput_({ ok: true, mode, groupId });
-  } catch (error) {
-    logDebug_('doPost:error', { message: error.message, stack: error.stack });
-    return jsonOutput_({ ok: false, error: error.message });
+    return { ok: true, mode, groupId };
   } finally {
     lock.releaseLock();
   }
+}
+
+function parsePayloadFromRequest_(rawBody, params) {
+  if (params && params.payload) {
+    return safeParseJson_(params.payload, {});
+  }
+
+  if (params && params.payloadBase64) {
+    const decoded = Utilities.newBlob(Utilities.base64DecodeWebSafe(params.payloadBase64)).getDataAsString();
+    return safeParseJson_(decoded, {});
+  }
+
+  const body = String(rawBody || '').trim();
+  if (!body) return {};
+
+  if (body.startsWith('{') || body.startsWith('[')) {
+    return safeParseJson_(body, {});
+  }
+
+  const parsed = {};
+  body.split('&').forEach(pair => {
+    const [rawKey, rawValue = ''] = pair.split('=');
+    if (!rawKey) return;
+    parsed[decodeURIComponent(rawKey)] = decodeURIComponent(rawValue.replace(/\+/g, ' '));
+  });
+
+  if (parsed.payload) {
+    return safeParseJson_(parsed.payload, {});
+  }
+
+  return {};
 }
 
 function assignOrLookupParticipant_(studyId, workerId) {

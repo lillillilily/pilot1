@@ -1239,28 +1239,63 @@ function hydrateFromPayload(payload) {
 // ════════════════════════════════
 // SUBMIT
 // ════════════════════════════════
+function parseSubmitResponse(raw) {
+  if (!raw) return {};
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return { raw };
+  }
+}
+
+async function submitPayloadViaGetFallback(payload, previousMessage = '') {
+  const url = new URL(CONFIG.submissionEndpoint);
+  const serialized = JSON.stringify(payload);
+  url.searchParams.set('action', 'submit');
+  url.searchParams.set('payload', serialized);
+
+  if (url.toString().length > 7000) {
+    throw new Error(previousMessage || 'Submission web app needs to be redeployed with GET fallback support.');
+  }
+
+  const res = await fetch(url.toString(), { method: 'GET' });
+  const raw = await res.text();
+  const data = parseSubmitResponse(raw);
+
+  if (!res.ok || data?.ok === false) {
+    throw new Error(data?.error || previousMessage || `HTTP ${res.status}`);
+  }
+
+  return data;
+}
+
+async function submitPayloadToBackend(payload) {
+  try {
+    const res = await fetch(CONFIG.submissionEndpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(payload)
+    });
+
+    const raw = await res.text();
+    const data = parseSubmitResponse(raw);
+
+    if (!res.ok || data?.ok === false) {
+      return await submitPayloadViaGetFallback(payload, data?.error || `HTTP ${res.status}`);
+    }
+
+    return data;
+  } catch (err) {
+    return await submitPayloadViaGetFallback(payload, err?.message || 'Submit failed');
+  }
+}
+
 async function handleSubmit() {
   const payload = collectPayload();
   console.log('=== PAYLOAD ===', JSON.stringify(payload, null, 2));
   if (CONFIG.submissionEndpoint) {
     try {
-      const res = await fetch(CONFIG.submissionEndpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload)
-      });
-
-      const raw = await res.text();
-      let data = {};
-      try {
-        data = raw ? JSON.parse(raw) : {};
-      } catch {
-        data = { raw };
-      }
-
-      if (!res.ok || data?.ok === false) {
-        throw new Error(data?.error || `HTTP ${res.status}`);
-      }
+      await submitPayloadToBackend(payload);
     } catch (err) {
       persistDraft(false);
       alert(`제출 중 오류: ${err.message}`);
