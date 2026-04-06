@@ -1,6 +1,8 @@
 const CONFIG = {
   numGroups: 5,
   sheetName: 'responses',
+  trialSheetName: 'trials_long',
+  storeRawPayload: true,
 
   // If this script is NOT bound to the target spreadsheet,
   // paste the Spreadsheet ID here and redeploy the web app.
@@ -69,43 +71,39 @@ function savePayload_(payload) {
       return { ok: false, error: 'worker_id is required' };
     }
 
-    const sheet = getResponseSheet_();
-    const rowIndex = findRowIndex_(sheet, studyId, workerId);
-    const existing = rowIndex > 0 ? getRowObject_(sheet, rowIndex) : null;
-    const groupId = payload.meta && payload.meta.group_id !== undefined && payload.meta.group_id !== null
-      ? Number(payload.meta.group_id)
-      : (existing ? Number(existing.groupId) : assignNewGroup_(studyId));
-
     payload.meta = payload.meta || {};
     payload.meta.worker_id = workerId;
     if (!payload.meta.participant_id) payload.meta.participant_id = workerId;
+
+    const responseSheet = getResponseSheet_();
+    const rowIndex = findRowIndex_(responseSheet, studyId, workerId);
+    const existing = rowIndex > 0 ? getRowObject_(responseSheet, rowIndex) : null;
+    const groupId = payload.meta.group_id !== undefined && payload.meta.group_id !== null
+      ? Number(payload.meta.group_id)
+      : (existing ? Number(existing.groupId) : assignNewGroup_(studyId));
+
     payload.meta.group_id = groupId;
 
-    const now = new Date().toISOString();
-    const rowValues = [
-      studyId,
-      workerId,
-      groupId,
-      existing ? existing.createdAt : now,
-      now,
-      JSON.stringify(payload)
-    ];
+    const participantRecord = buildParticipantRecord_(payload, existing);
+    const savedRowIndex = upsertRecord_(
+      responseSheet,
+      rowIndex,
+      participantRecord,
+      getResponseHeaders_()
+    );
 
-    let mode = 'created';
-    if (rowIndex > 0) {
-      sheet.getRange(rowIndex, 1, 1, rowValues.length).setValues([rowValues]);
-      mode = 'updated';
-    } else {
-      sheet.appendRow(rowValues);
-    }
+    replaceTrialRows_(payload);
 
+    const mode = rowIndex > 0 ? 'updated' : 'created';
     logDebug_('savePayload:success', {
       studyId,
       workerId,
       groupId,
       mode,
-      rowIndex: rowIndex > 0 ? rowIndex : sheet.getLastRow(),
-      spreadsheetUrl: getSpreadsheet_().getUrl()
+      rowIndex: savedRowIndex,
+      spreadsheetUrl: getSpreadsheet_().getUrl(),
+      responseSheet: CONFIG.sheetName,
+      trialSheet: CONFIG.trialSheetName
     });
 
     return { ok: true, mode, groupId };
@@ -170,9 +168,14 @@ function assignOrLookupParticipant_(studyId, workerId) {
 
     const groupId = assignNewGroup_(studyId);
     const now = new Date().toISOString();
-    sheet.appendRow([studyId, workerId, groupId, now, now, '']);
+    const rowIndexNew = upsertRecord_(
+      sheet,
+      -1,
+      buildPlaceholderRecord_(studyId, workerId, groupId, now),
+      getResponseHeaders_()
+    );
 
-    logDebug_('assign:new', { studyId, workerId, groupId, rowIndex: sheet.getLastRow() });
+    logDebug_('assign:new', { studyId, workerId, groupId, rowIndex: rowIndexNew });
 
     return {
       ok: true,
@@ -229,10 +232,219 @@ function getResponseSheet_() {
 
   if (!sheet) {
     sheet = spreadsheet.insertSheet(CONFIG.sheetName);
-    sheet.appendRow(['study_id', 'worker_id', 'group_id', 'created_at', 'updated_at', 'payload_json']);
   }
 
+  ensureSheetHeaders_(sheet, getResponseHeaders_());
   return sheet;
+}
+
+function getTrialSheet_() {
+  const spreadsheet = getSpreadsheet_();
+  let sheet = spreadsheet.getSheetByName(CONFIG.trialSheetName);
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(CONFIG.trialSheetName);
+  }
+
+  ensureSheetHeaders_(sheet, getTrialHeaders_());
+  return sheet;
+}
+
+function getResponseHeaders_() {
+  return [
+    'study_id',
+    'worker_id',
+    'group_id',
+    'created_at',
+    'updated_at',
+    'payload_json',
+    'participant_id',
+    'submitted_at',
+    'experience',
+    'comment_difficult_images',
+    'comment_other_feedback',
+    'num_trials'
+  ];
+}
+
+function getTrialHeaders_() {
+  return [
+    'study_id',
+    'worker_id',
+    'participant_id',
+    'group_id',
+    'experience',
+    'submitted_at',
+    'trial_slot',
+    'scene_id',
+    'scene_number',
+    'blur_level',
+    'blur_id',
+    'image_path',
+    'q1_state',
+    'q2_axis',
+    'q3_cues',
+    'q4_confidence',
+    'trial_start_ms',
+    'first_response_ms',
+    'last_response_ms',
+    'time_to_first_response_ms',
+    'total_response_time_ms'
+  ];
+}
+
+function ensureSheetHeaders_(sheet, requiredHeaders) {
+  const lastColumn = sheet.getLastColumn();
+  const currentHeaders = lastColumn > 0
+    ? sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(v => String(v || '').trim())
+    : [];
+
+  if (currentHeaders.length === 0 || currentHeaders.every(v => !v)) {
+    sheet.getRange(1, 1, 1, requiredHeaders.length).setValues([requiredHeaders]);
+    return requiredHeaders;
+  }
+
+  const missing = requiredHeaders.filter(h => !currentHeaders.includes(h));
+  if (missing.length) {
+    sheet.getRange(1, currentHeaders.length + 1, 1, missing.length).setValues([missing]);
+  }
+
+  return currentHeaders.concat(missing);
+}
+
+function buildPlaceholderRecord_(studyId, workerId, groupId, now) {
+  return {
+    study_id: studyId,
+    worker_id: workerId,
+    group_id: groupId,
+    created_at: now,
+    updated_at: now,
+    payload_json: '',
+    participant_id: workerId,
+    submitted_at: '',
+    experience: '',
+    comment_difficult_images: '',
+    comment_other_feedback: '',
+    num_trials: ''
+  };
+}
+
+function buildParticipantRecord_(payload, existing) {
+  const meta = payload.meta || {};
+  const comments = payload.comments || {};
+  const trials = Array.isArray(payload.trials) ? payload.trials : [];
+  const now = new Date().toISOString();
+  const record = {
+    study_id: sanitize_(payload.study_id || 'default_study'),
+    worker_id: sanitize_(meta.worker_id || meta.participant_id || ''),
+    group_id: meta.group_id ?? '',
+    created_at: existing && existing.createdAt ? existing.createdAt : (meta.timestamp || now),
+    updated_at: now,
+    payload_json: CONFIG.storeRawPayload ? JSON.stringify(payload) : '',
+    participant_id: sanitize_(meta.participant_id || meta.worker_id || ''),
+    submitted_at: meta.timestamp || now,
+    experience: sanitize_(meta.experience || ''),
+    comment_difficult_images: comments.difficult_images || '',
+    comment_other_feedback: comments.other_feedback || '',
+    num_trials: trials.length
+  };
+
+  trials.forEach((trial, idx) => {
+    const slot = sanitize_(trial.trial_slot || `s${idx + 1}`);
+    const timing = trial.timing || {};
+
+    record[`${slot}_scene_id`] = trial.scene_id || '';
+    record[`${slot}_scene_number`] = trial.scene_number ?? '';
+    record[`${slot}_blur_level`] = trial.blur_level ?? '';
+    record[`${slot}_blur_id`] = trial.blur_id || '';
+    record[`${slot}_image_path`] = trial.image_path || '';
+    record[`${slot}_q1_state`] = trial.q1_state || '';
+    record[`${slot}_q2_axis`] = trial.q2_axis || '';
+    record[`${slot}_q3_cues`] = Array.isArray(trial.q3_cues) ? trial.q3_cues.join('|') : (trial.q3_cues || '');
+    record[`${slot}_q4_confidence`] = trial.q4_confidence ?? '';
+    record[`${slot}_trial_start_ms`] = timing.trial_start_ms ?? '';
+    record[`${slot}_first_response_ms`] = timing.first_response_ms ?? '';
+    record[`${slot}_last_response_ms`] = timing.last_response_ms ?? '';
+    record[`${slot}_time_to_first_response_ms`] = timing.time_to_first_response_ms ?? '';
+    record[`${slot}_total_response_time_ms`] = timing.total_response_time_ms ?? '';
+  });
+
+  return record;
+}
+
+function upsertRecord_(sheet, rowIndex, record, baseHeaders) {
+  const headers = ensureSheetHeaders_(sheet, (baseHeaders || []).concat(Object.keys(record)));
+  let rowValues = headers.map(h => (record[h] !== undefined ? record[h] : ''));
+
+  if (rowIndex > 0) {
+    const currentValues = sheet.getRange(rowIndex, 1, 1, headers.length).getValues()[0];
+    rowValues = headers.map((h, idx) => (record[h] !== undefined ? record[h] : currentValues[idx]));
+    sheet.getRange(rowIndex, 1, 1, headers.length).setValues([rowValues]);
+    return rowIndex;
+  }
+
+  sheet.appendRow(rowValues);
+  return sheet.getLastRow();
+}
+
+function replaceTrialRows_(payload) {
+  const sheet = getTrialSheet_();
+  const headers = ensureSheetHeaders_(sheet, getTrialHeaders_());
+  const meta = payload.meta || {};
+  const studyId = sanitize_(payload.study_id || 'default_study');
+  const workerId = sanitize_(meta.worker_id || meta.participant_id || '');
+  const participantId = sanitize_(meta.participant_id || workerId);
+  const submittedAt = meta.timestamp || new Date().toISOString();
+  const experience = sanitize_(meta.experience || '');
+  const groupId = meta.group_id ?? '';
+
+  deleteExistingParticipantRows_(sheet, studyId, workerId);
+
+  const trials = Array.isArray(payload.trials) ? payload.trials : [];
+  if (!trials.length) return;
+
+  const rows = trials.map((trial, idx) => {
+    const timing = trial.timing || {};
+    const record = {
+      study_id: studyId,
+      worker_id: workerId,
+      participant_id: participantId,
+      group_id: groupId,
+      experience,
+      submitted_at: submittedAt,
+      trial_slot: trial.trial_slot || `s${idx + 1}`,
+      scene_id: trial.scene_id || '',
+      scene_number: trial.scene_number ?? '',
+      blur_level: trial.blur_level ?? '',
+      blur_id: trial.blur_id || '',
+      image_path: trial.image_path || '',
+      q1_state: trial.q1_state || '',
+      q2_axis: trial.q2_axis || '',
+      q3_cues: Array.isArray(trial.q3_cues) ? trial.q3_cues.join('|') : (trial.q3_cues || ''),
+      q4_confidence: trial.q4_confidence ?? '',
+      trial_start_ms: timing.trial_start_ms ?? '',
+      first_response_ms: timing.first_response_ms ?? '',
+      last_response_ms: timing.last_response_ms ?? '',
+      time_to_first_response_ms: timing.time_to_first_response_ms ?? '',
+      total_response_time_ms: timing.total_response_time_ms ?? ''
+    };
+
+    return headers.map(h => (record[h] !== undefined ? record[h] : ''));
+  });
+
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, headers.length).setValues(rows);
+}
+
+function deleteExistingParticipantRows_(sheet, studyId, workerId) {
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+
+  const values = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (String(values[i][0]).trim() === studyId && String(values[i][1]).trim() === workerId) {
+      sheet.deleteRow(i + 2);
+    }
+  }
 }
 
 function findRowIndex_(sheet, studyId, workerId) {
