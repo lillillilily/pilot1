@@ -384,7 +384,7 @@ const SCENE_FILES = [
   'swing_000050',
   'train_000065'
 ];
-const ALWAYS_JPG_SCENES = new Set(['camel_000065', 'dance-jump_000000', 'flamingo_000075']);
+const DEFAULT_IMAGE_EXT = 'png';
 
 const CONFIG = {
   studyId: 'exp1_scene_perception',
@@ -393,7 +393,7 @@ const CONFIG = {
   sceneFiles: SCENE_FILES,
   numScenes: SCENE_FILES.length,
   numBlurLevels: 5,
-  imageBasePath: './images',     // judgment images: ./images/B{level}/{scene}.{jpg|png}
+  imageBasePath: './images',     // judgment images: ./images/B{level}/{scene}.png
   bboxBasePath:  './images/bbox' // bbox images: ./images/bbox/B{level}/{scene}.png
 };
 
@@ -740,7 +740,7 @@ function buildTrialAssignments(groupId) {
     const n = i + 1;
     const bl = (n + groupId) % CONFIG.numBlurLevels;
     const blurId = `B${String(bl).padStart(2, '0')}`;
-    const imageExt = bl === 0 || ALWAYS_JPG_SCENES.has(sceneFile) ? 'jpg' : 'png';
+    const imageExt = DEFAULT_IMAGE_EXT;
     return {
       sceneNumber: n,
       sceneId: sceneFile,
@@ -924,6 +924,43 @@ function buildTrialPage(slotId, dispIdx, total, assignment) {
     <div class="nav-hint" id="hint-${dispIdx + 1}">${t('hintTrialRequired')}</div>
   `;
   return page;
+}
+
+function renderTrialPages(groupId) {
+  window._groupId = groupId;
+
+  Object.keys(trialAssignments).forEach(key => delete trialAssignments[key]);
+
+  const container = document.getElementById('trial-pages-container');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const trials = buildTrialAssignments(groupId);
+  trials.forEach((assignment, i) => {
+    const slotId = MAIN_IDS[i];
+    trialAssignments[slotId] = { ...assignment, trialSlot: slotId };
+
+    const page = buildTrialPage(slotId, i, trials.length, assignment);
+    container.appendChild(page);
+
+    buildAxisSelector(slotId);
+    buildCueCheckboxes(slotId);
+    buildLikert(`conf-row-${slotId}`, slotId);
+
+    const imgBox = document.getElementById(`imgbox-${slotId}`);
+    if (imgBox) imgBox.innerHTML = `
+       <img src="${assignment.imagePath}" alt="image ${i + 1}"
+         onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>${t('loadFail')}</div><div class=\\'fn\\'>${assignment.imagePath}</div>'">
+    `;
+
+    const bboxBox = document.getElementById(`imgbox-bbox-${slotId}`);
+    if (bboxBox) bboxBox.innerHTML = `
+       <img src="${assignment.bboxPath}" alt="target image ${i + 1}"
+         onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>${t('loadFail')}</div><div class=\\'fn\\'>${assignment.bboxPath}</div>'">
+    `;
+  });
+
+  refreshDynamicI18n();
 }
 
 function refreshDynamicI18n() {
@@ -1207,44 +1244,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   let groupId = resolveGroupId();
   let backendPayload = null;
 
+  // Render trial pages immediately so navigation works even if the backend is slow.
+  renderTrialPages(groupId);
+
   if (!hasGroupOverride && CONFIG.submissionEndpoint && initId) {
     try {
       const assigned = await assignGroupFromBackend(initId);
-      if (typeof assigned?.groupId === 'number') groupId = assigned.groupId;
+      if (typeof assigned?.groupId === 'number' && currentPage === 0) {
+        groupId = assigned.groupId;
+        renderTrialPages(groupId);
+      }
       if (assigned?.payload) backendPayload = assigned.payload;
     } catch (err) {
       setIdStatus(t('statusAssignFail', { msg: err.message }), 'warn');
     }
   }
-
-  window._groupId = groupId;
-  const trials = buildTrialAssignments(groupId);
-
-  const container = document.getElementById('trial-pages-container');
-  trials.forEach((assignment, i) => {
-    const slotId = MAIN_IDS[i];
-    trialAssignments[slotId] = { ...assignment, trialSlot: slotId };
-
-    const page = buildTrialPage(slotId, i, trials.length, assignment);
-    container.appendChild(page);
-
-    buildAxisSelector(slotId);
-    buildCueCheckboxes(slotId);
-    buildLikert(`conf-row-${slotId}`, slotId);
-
-    const imgBox = document.getElementById(`imgbox-${slotId}`);
-    if (imgBox) imgBox.innerHTML = `
-       <img src="${assignment.imagePath}" alt="image ${i + 1}"
-         onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>${t('loadFail')}</div><div class=\\'fn\\'>${assignment.imagePath}</div>'">
-    `;
-    const bboxBox = document.getElementById(`imgbox-bbox-${slotId}`);
-    if (bboxBox) bboxBox.innerHTML = `
-       <img src="${assignment.bboxPath}" alt="target image ${i + 1}"
-         onerror="this.parentElement.innerHTML='<div class=\\'ph\\'>${t('loadFail')}</div><div class=\\'fn\\'>${assignment.bboxPath}</div>'">
-    `;
-  });
-
-      refreshDynamicI18n();
 
   if (backendPayload) {
     hydrateFromPayload(backendPayload);
