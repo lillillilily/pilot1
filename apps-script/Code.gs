@@ -83,6 +83,11 @@ function savePayload_(payload) {
       : (existing ? Number(existing.groupId) : assignNewGroup_(studyId));
 
     payload.meta.group_id = groupId;
+    payload.meta.completion_code = normalizeCompletionCode_(
+      payload.meta.completion_code ||
+      existing?.payload?.meta?.completion_code ||
+      generateCompletionCode_(studyId, workerId, groupId)
+    );
 
     const participantRecord = buildParticipantRecord_(payload, existing);
     const savedRowIndex = upsertRecord_(
@@ -106,7 +111,7 @@ function savePayload_(payload) {
       trialSheet: CONFIG.trialSheetName
     });
 
-    return { ok: true, mode, groupId };
+    return { ok: true, mode, groupId, completionCode: payload.meta.completion_code };
   } finally {
     lock.releaseLock();
   }
@@ -259,6 +264,7 @@ function getResponseHeaders_() {
     'updated_at',
     'payload_json',
     'participant_id',
+    'completion_code',
     'submitted_at',
     'experience',
     'self_report_careful',
@@ -323,6 +329,7 @@ function buildPlaceholderRecord_(studyId, workerId, groupId, now) {
     updated_at: now,
     payload_json: '',
     participant_id: workerId,
+    completion_code: '',
     submitted_at: '',
     experience: '',
     self_report_careful: '',
@@ -347,6 +354,7 @@ function buildParticipantRecord_(payload, existing) {
     updated_at: now,
     payload_json: CONFIG.storeRawPayload ? JSON.stringify(payload) : '',
     participant_id: sanitize_(meta.participant_id || meta.worker_id || ''),
+    completion_code: normalizeCompletionCode_(meta.completion_code || ''),
     submitted_at: meta.timestamp || now,
     experience: sanitize_(meta.experience || ''),
     self_report_careful: selfReport.careful ?? '',
@@ -483,6 +491,22 @@ function getRowObject_(sheet, rowIndex) {
 
 function sanitize_(value) {
   return String(value || '').trim();
+}
+
+function normalizeCompletionCode_(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.slice(-6).padStart(6, '0');
+}
+
+function generateCompletionCode_(studyId, workerId, groupId) {
+  const seed = `${studyId}|${workerId}|${groupId}|completion-code`;
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return String((hash >>> 0) % 1000000).padStart(6, '0');
 }
 
 function safeParseJson_(text, fallback) {

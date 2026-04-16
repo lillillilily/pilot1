@@ -244,6 +244,22 @@ textarea { min-height:68px; resize:vertical; }
 #thankyou .check { font-size:40px; margin-bottom:16px; }
 #thankyou h2 { font-size:21px; font-weight:600; margin-bottom:10px; }
 #thankyou p { font-size:13px; color:var(--muted); line-height:1.7; }
+.completion-code-box {
+  display:none; max-width:340px; margin:18px auto 0;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px 18px;
+}
+.completion-code-label {
+  font-family:var(--mono); font-size:11px; letter-spacing:.08em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:8px;
+}
+.completion-code-value {
+  font-family:var(--mono); font-size:32px; letter-spacing:.18em;
+  color:var(--accent); margin-bottom:8px;
+}
+.completion-code-hint {
+  font-size:12px; color:var(--muted); line-height:1.6;
+}
 </style>
 </head>
 <body>
@@ -379,6 +395,11 @@ textarea { min-height:68px; resize:vertical; }
   <div class="check">✓</div>
   <h2 id="thankyou-title">참여해주셔서 감사합니다</h2>
   <p id="thankyou-msg">응답이 정상적으로 저장되었습니다.<br>식별자를 메모해두셨다면 같은 번호로 재접속해 응답을 수정할 수 있습니다.</p>
+  <div class="completion-code-box" id="completion-code-box">
+    <div class="completion-code-label" id="completion-code-label">Your completion code is</div>
+    <div class="completion-code-value" id="completion-code-value">000000</div>
+    <div class="completion-code-hint" id="completion-code-hint">Please copy this 6-digit code back to MTurk.</div>
+  </div>
 </div>
 
 </div><!-- /.shell -->
@@ -386,7 +407,7 @@ textarea { min-height:68px; resize:vertical; }
 // ════════════════════════════════
 // CONFIG
 // ════════════════════════════════
-const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwUhKc2HhOB5CHukJ-65M-8BnS2nBH9O3axaTKGVoZLRZlM1wbXv_XidTFXIbMd03JU/exec';
+const APPS_SCRIPT_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxlgzT2jpbkJ1_WmxH6gEj-Ma_FFto_jUhT5IC3QiS2Xsf7nSzKPQ4jOVADP8D7-MTB/exec';
 
 const SCENE_FILES = [
   'bus_000010',
@@ -467,6 +488,8 @@ const I18N = {
     submitErrorPrefix: 'Submission error',
     thankyouTitle: 'Thank you for your participation',
     thankyouMsg: 'Your responses were saved successfully.<br>You can revisit with the same identifier to update responses.',
+    completionCodeLabel: 'Your completion code is',
+    completionCodeHint: 'Please copy this 6-digit code back to MTurk.',
     progressBefore: 'Before start',
     progressDone: '{done} / {total} complete',
     trialCounter: 'Image {idx} / {total}',
@@ -544,6 +567,8 @@ const I18N = {
     submitErrorPrefix: '제출 중 오류',
     thankyouTitle: '참여해주셔서 감사합니다',
     thankyouMsg: '응답이 정상적으로 저장되었습니다.<br>식별자를 메모해두셨다면 같은 번호로 재접속해 응답을 수정할 수 있습니다.',
+    completionCodeLabel: 'Your completion code is',
+    completionCodeHint: '이 6자리 코드를 MTurk 제출란에 그대로 입력해 주세요.',
     progressBefore: '시작 전',
     progressDone: '{done} / {total} 완료',
     trialCounter: '이미지 {idx} / {total}',
@@ -645,6 +670,8 @@ function applyStaticI18n() {
   setById('final-hint', 'finalHint');
   setById('thankyou-title', 'thankyouTitle');
   setById('thankyou-msg', 'thankyouMsg', true);
+  setById('completion-code-label', 'completionCodeLabel');
+  setById('completion-code-hint', 'completionCodeHint');
 
   const idInput = document.getElementById('participant-id');
   if (idInput) idInput.placeholder = t('idPlaceholder');
@@ -675,6 +702,7 @@ const selfReport = {
   careful: null,
   visibility: null
 };
+let completionCode = '';
 let isHydrating = false;
 
 // ════════════════════════════════
@@ -708,6 +736,52 @@ function setSubmitStatus(msg = '', tone = 'ok') {
   b.className = `status-box show ${tone}`;
   b.textContent = msg;
 }
+
+function normalizeCompletionCode(value) {
+  const digits = String(value || '').replace(/\D/g, '');
+  if (!digits) return '';
+  return digits.slice(-6).padStart(6, '0');
+}
+
+function generateCompletionCode(seedText = '') {
+  const seed = `${CONFIG.studyId}|${seedText}|completion-code`;
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return String((hash >>> 0) % 1000000).padStart(6, '0');
+}
+
+function ensureCompletionCode(payload = null) {
+  if (completionCode) return completionCode;
+  const meta = payload?.meta || {};
+  const seed = [
+    meta.worker_id || meta.participant_id || getParticipantId(),
+    meta.group_id ?? window._groupId ?? '',
+    CONFIG.assetVersion || ''
+  ].join('|');
+  completionCode = generateCompletionCode(seed);
+  return completionCode;
+}
+
+function renderCompletionCode(code = '') {
+  const box = document.getElementById('completion-code-box');
+  const value = document.getElementById('completion-code-value');
+  if (!box || !value) return;
+
+  const normalized = normalizeCompletionCode(code);
+  if (!normalized) {
+    value.textContent = '';
+    box.style.display = 'none';
+    return;
+  }
+
+  completionCode = normalized;
+  value.textContent = normalized;
+  box.style.display = 'block';
+}
+
 function handleIdChange() {
   const pid = getParticipantId();
 
@@ -758,6 +832,9 @@ function clearAllResponses() {
     document.getElementById(`l-self-careful-${i}`)?.classList.remove('selected');
     document.getElementById(`l-self-visibility-${i}`)?.classList.remove('selected');
   }
+
+  completionCode = '';
+  renderCompletionCode('');
 
   document.getElementById('open-feedback-1').value = '';
   document.getElementById('open-feedback-2').value = '';
@@ -1262,7 +1339,8 @@ function collectPayload() {
       participant_id: getParticipantId(),
       worker_id: getParticipantId(),
       group_id: window._groupId ?? null,
-      experience: document.querySelector('[name="exp"]:checked')?.value || null
+      experience: document.querySelector('[name="exp"]:checked')?.value || null,
+      completion_code: completionCode || null
     },
     trials: MAIN_IDS.map(id => ({
       ...(function () {
@@ -1311,6 +1389,8 @@ function hydrateFromPayload(payload) {
   isHydrating = true;
   try {
     const meta = payload.meta || {};
+    completionCode = normalizeCompletionCode(meta.completion_code);
+    renderCompletionCode(completionCode);
     if (meta.experience != null && meta.experience !== '') {
       const el = document.querySelector(`[name="exp"][value="${meta.experience}"]`);
       if (el) selectChoice(el.closest('.choice'), 'exp', meta.experience);
@@ -1409,6 +1489,9 @@ async function handleSubmit() {
   const payload = collectPayload();
   const submitBtn = document.getElementById('btn-submit-final');
   const prevBtn = document.getElementById('btn-prev-final');
+  let submitResult = null;
+
+  payload.meta.completion_code = ensureCompletionCode(payload);
 
   console.log('=== PAYLOAD ===', JSON.stringify(payload, null, 2));
   if (submitBtn) {
@@ -1420,7 +1503,7 @@ async function handleSubmit() {
 
   if (CONFIG.submissionEndpoint) {
     try {
-      await submitPayloadToBackend(payload);
+      submitResult = await submitPayloadToBackend(payload);
     } catch (err) {
       persistDraft(false);
       if (submitBtn) {
@@ -1433,6 +1516,12 @@ async function handleSubmit() {
       return;
     }
   }
+  renderCompletionCode(
+    submitResult?.completionCode ||
+    submitResult?.completion_code ||
+    payload.meta.completion_code ||
+    ensureCompletionCode(payload)
+  );
   persistDraft(true);
   setSubmitStatus('', 'ok');
   document.querySelector('.sticky').style.display = 'none';
@@ -1446,6 +1535,7 @@ async function handleSubmit() {
 // ════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
   setLanguage('en');
+  renderCompletionCode('');
 
   const urlParams = new URLSearchParams(window.location.search);
   const workerIdFromUrl = urlParams.get('workerId');
